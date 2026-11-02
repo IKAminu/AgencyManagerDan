@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Download, ExternalLink, Filter, Info, Plus, Search } from 'lucide-react'
+import { Download, ExternalLink, Filter, Info, Pencil, Plus, Search } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, PageHeader, Select, TableShell } from '@/components/ui'
 import { documents, supplierCosts } from '@/data/mockData'
 import { useAppStore } from '@/hooks/useAppStore'
@@ -23,18 +23,18 @@ const useFilter = () => {
 
 export function LeadsPage() {
   const controls = useFilter()
-  const { leads } = useAppStore()
+  const { leads, setAction, setEditing } = useAppStore()
   const rows = leads.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.reference} ${item.name} ${item.phone} ${item.source}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Converted', 'Lost']} {...controls}><TableShell><table><thead><tr><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Received</th><th>Next follow-up</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell></Module>
+  return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Converted', 'Lost']} {...controls}><TableShell><table><thead><tr><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Received</th><th>Next follow-up</th><th>Actions</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'lead', id: lead.id }); setAction('lead') }}><Pencil size={14} /> Edit</Button></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell></Module>
 }
 
 export function CustomersPage() {
   const controls = useFilter()
-  const { customers, bookings, payments } = useAppStore()
+  const { customers, bookings, payments, setAction, setEditing } = useAppStore()
   const rows = customers.filter((item) => `${item.reference} ${item.name} ${item.phone} ${item.email}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Customer records" description="Permanent customer profiles and their complete relationship with Dandurgu." actionLabel="Add customer" actionType="customer" options={['Current', 'Historical']} {...controls}><TableShell><table><thead><tr><th>Customer</th><th>Contact</th><th>Nationality</th><th>Type</th><th>Bookings</th><th>Total paid</th><th>Outstanding</th></tr></thead><tbody>{rows.map((customer) => {
+  return <Module title="Customer records" description="Permanent customer profiles and their complete relationship with Dandurgu." actionLabel="Add customer" actionType="customer" options={['Current', 'Historical']} {...controls}><TableShell><table><thead><tr><th>Customer</th><th>Contact</th><th>Nationality</th><th>Type</th><th>Bookings</th><th>Total paid</th><th>Outstanding</th><th>Actions</th></tr></thead><tbody>{rows.map((customer) => {
     const customerBookings = bookings.filter((item) => item.customerId === customer.id)
-    return <tr key={customer.id}><td><strong>{customer.name}</strong><span className="cell-sub">{customer.reference}</span></td><td>{customer.phone}<span className="cell-sub">{customer.email || 'No email recorded'}</span></td><td>{customer.nationality}</td><td>{customer.historical ? <Badge>Historical</Badge> : 'Current'}</td><td>{customerBookings.length}</td><td>{money(payments.filter((item) => item.customerId === customer.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0))}</td><td><strong>{money(customerBookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0))}</strong></td></tr>
+    return <tr key={customer.id}><td><strong>{customer.name}</strong><span className="cell-sub">{customer.reference}</span></td><td>{customer.phone}<span className="cell-sub">{customer.email || 'No email recorded'}</span></td><td>{customer.nationality}</td><td>{customer.historical ? <Badge>Historical</Badge> : 'Current'}</td><td>{customerBookings.length}</td><td>{money(payments.filter((item) => item.customerId === customer.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0))}</td><td><strong>{money(customerBookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0))}</strong></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'customer', id: customer.id }); setAction('customer') }}><Pencil size={14} /> Edit</Button></td></tr>
   })}</tbody></table></TableShell></Module>
 }
 
