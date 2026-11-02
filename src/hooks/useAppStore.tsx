@@ -1,12 +1,12 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers } from '@/data/mockData'
-import type { Booking, Customer, Lead, Payment, QuickActionType, Traveller } from '@/types'
+import type { Booking, Customer, Lead, Payment, QuickActionType, TravelPackage, Traveller } from '@/types'
 
 type AppStore = {
   leads: Lead[]
   customers: Customer[]
   bookings: Booking[]
-  packages: typeof initialPackages
+  packages: TravelPackage[]
   payments: Payment[]
   travellers: Traveller[]
   action: QuickActionType | null
@@ -25,12 +25,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState(initialLeads)
   const [customers, setCustomers] = useState(initialCustomers)
   const [bookings, setBookings] = useState(initialBookings)
+  const [packages, setPackages] = useState<TravelPackage[]>(initialPackages)
   const [payments, setPayments] = useState(initialPayments)
   const [travellers, setTravellers] = useState(initialTravellers)
   const [action, setAction] = useState<QuickActionType | null>(null)
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
 
   const addRecord = (type: QuickActionType, values: Record<string, string>) => {
+    if (type === 'package') setPackages((items) => [{ id: id(), code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), currency: 'NGN', availability: Number(values.availability || 0), status: (values.status || 'Draft') as TravelPackage['status'] }, ...items])
     if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-2026-${Math.random().toString(36).slice(2, 10).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: `CUS-${1100 + items.length}`, name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') setBookings((items) => [{ id: id(), reference: `BKG-2026-${String(160 + items.length).padStart(4, '0')}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status: (values.status || 'Pending Confirmation') as Booking['status'] }, ...items])
@@ -40,6 +42,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }
 
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
+    if (type === 'package') setPackages((items) => items.map((item) => item.id === recordId ? { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), availability: Number(values.availability || 0), status: values.status as TravelPackage['status'] } : item))
     if (type === 'lead') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
     if (type === 'customer') setCustomers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, nationality: values.nationality, city: values.city || undefined, historical: values.historical === 'true', notes: values.notes || undefined } : item))
     if (type === 'booking') setBookings((items) => items.map((item) => item.id === recordId ? { ...item, packageName: values.packageName, agreedPrice: Number(values.agreedPrice), departureDate: values.departureDate, returnDate: values.returnDate, status: values.status as Booking['status'] } : item))
@@ -48,7 +51,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages: initialPackages, payments, travellers, action, setAction, addRecord, editing, setEditing, updateRecord }), [leads, customers, bookings, payments, travellers, action, editing])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, action, setAction, addRecord, editing, setEditing, updateRecord }), [leads, customers, bookings, packages, payments, travellers, action, editing])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
