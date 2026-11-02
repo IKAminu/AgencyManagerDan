@@ -9,6 +9,7 @@ const details: Record<QuickActionType, { title: string; description: string }> =
   booking: { title: 'Create booking', description: 'The agreed amount is saved as a booking snapshot and will not change with package prices.' },
   payment: { title: 'Record payment', description: 'Only confirmed payments reduce the calculated outstanding balance.' },
   traveller: { title: 'Add traveller', description: 'Add an individual traveller to an existing booking.' },
+  package: { title: 'Create package', description: 'Add a package to the internal demonstration catalogue.' },
 }
 
 export function QuickActionModal() {
@@ -22,6 +23,7 @@ export function QuickActionModal() {
     booking: bookings.find((item) => item.id === editing.id),
     payment: payments.find((item) => item.id === editing.id),
     traveller: travellers.find((item) => item.id === editing.id),
+    package: packages.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
   const close = () => { setAction(null); setEditing(null); setError('') }
@@ -32,7 +34,10 @@ export function QuickActionModal() {
     const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>
     if (!values.name && (action === 'lead' || action === 'customer' || action === 'traveller')) return setError('Please enter a full name.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
-    if ((action === 'payment' || action === 'booking') && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
+    if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
+    if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
+    if (action === 'package' && Number(values.price) <= 0) return setError('Package selling price must be greater than zero.')
+    if (action === 'package' && Number(values.estimatedCost || 0) > Number(values.price)) return setError('Estimated cost cannot exceed the selling price.')
     if (isEditing && editing) updateRecord(action, editing.id, values)
     else addRecord(action, values)
     close()
@@ -71,6 +76,17 @@ export function QuickActionModal() {
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
+      </>}
+      {action === 'package' && <>
+        <Field label="Package code"><Input name="code" defaultValue={value('code')} required /></Field>
+        <Field label="Package name"><Input name="name" defaultValue={value('name')} required /></Field>
+        <Field label="Category"><Select name="category" defaultValue={value('category', 'Umrah')}><option>Umrah</option><option>Hajj</option><option>Other Tours</option><option>General Travel</option></Select></Field>
+        <Field label="Destination"><Input name="destination" defaultValue={value('destination', 'Makkah & Madinah')} required /></Field>
+        <Field label="Duration"><Input name="duration" defaultValue={value('duration')} placeholder="e.g. 10 days" required /></Field>
+        <Field label="Selling price (NGN)"><Input name="price" type="number" min="1" defaultValue={value('price')} required /></Field>
+        <Field label="Estimated cost (NGN)"><Input name="estimatedCost" type="number" min="0" defaultValue={value('estimatedCost', '0')} /></Field>
+        <Field label="Available places"><Input name="availability" type="number" min="0" defaultValue={value('availability', '0')} /></Field>
+        <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
       </>}
       {action === 'traveller' && <>
         {!isEditing && <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>}
