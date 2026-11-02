@@ -108,4 +108,4 @@ export interface DocumentRecord {
   status: 'Valid' | 'Expiring Soon' | 'Needs Review'
 }
 
-export type QuickActionType = 'lead' | 'customer' | 'booking' | 'payment' | 'traveller'
+export type QuickActionType = 'lead' | 'customer' | 'booking' | 'payment' | 'traveller' | 'package'
