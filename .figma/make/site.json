@@ -1,0 +1,8 @@
+{
+  "title": "Dandurgu Headquarters",
+  "description": "Internal travel operations management for Dandurgu Air Travel & Tours Ltd.",
+  "language": "en",
+  "robots": { "index": false },
+  "icons": { "icon": "/app-icon.svg" },
+  "accessibility": { "addBypassLinks": true }
+}
