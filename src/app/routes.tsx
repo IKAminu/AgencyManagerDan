@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import { AppLayout } from '@/layouts/AppLayout'
 
 export const router = createBrowserRouter([
+
   {
     path: '/',
     Component: AppLayout,
@@ -19,4 +20,6 @@ export const router = createBrowserRouter([
       { path: '*', lazy: async () => ({ Component: (await import('@/pages/Modules')).NotFoundPage }) },
     ],
   },
-])
+], {
+  basename: '/AgencyManagerDan/',
+})
