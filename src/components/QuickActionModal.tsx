@@ -12,65 +12,71 @@ const details: Record<QuickActionType, { title: string; description: string }> =
 }
 
 export function QuickActionModal() {
-  const { action, setAction, addRecord, customers, bookings, packages } = useAppStore()
+  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers } = useAppStore()
   const [error, setError] = useState('')
   if (!action) return null
+
+  const current = editing?.type === action ? ({
+    lead: leads.find((item) => item.id === editing.id),
+    customer: customers.find((item) => item.id === editing.id),
+    booking: bookings.find((item) => item.id === editing.id),
+    payment: payments.find((item) => item.id === editing.id),
+    traveller: travellers.find((item) => item.id === editing.id),
+  }[action]) : undefined
+  const isEditing = Boolean(current)
+  const close = () => { setAction(null); setEditing(null); setError('') }
+  const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : fallback
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>
     if (!values.name && (action === 'lead' || action === 'customer' || action === 'traveller')) return setError('Please enter a full name.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
-    if (action === 'payment' && Number(values.amount) <= 0) return setError('Payment amount must be greater than zero.')
-    addRecord(action, values)
+    if ((action === 'payment' || action === 'booking') && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
+    if (isEditing && editing) updateRecord(action, editing.id, values)
+    else addRecord(action, values)
+    close()
   }
 
-  return <Modal title={details[action].title} description={details[action].description} onClose={() => setAction(null)}>
+  return <Modal title={isEditing ? `Edit ${action}` : details[action].title} description={isEditing ? 'Update this demonstration record.' : details[action].description} onClose={close}>
     <form className="form-grid" onSubmit={submit}>
-      {(action === 'lead' || action === 'customer' || action === 'traveller') && <Field label="Full name"><Input name="name" autoFocus required /></Field>}
-      {(action === 'lead' || action === 'customer') && <Field label="Phone number"><Input name="phone" type="tel" required /></Field>}
-      {(action === 'lead' || action === 'customer') && <Field label="Email (optional)"><Input name="email" type="email" /></Field>}
+      {(action === 'lead' || action === 'customer' || action === 'traveller') && <Field label="Full name"><Input name="name" defaultValue={value('name')} autoFocus required /></Field>}
+      {(action === 'lead' || action === 'customer') && <Field label="Phone number"><Input name="phone" type="tel" defaultValue={value('phone')} required /></Field>}
+      {(action === 'lead' || action === 'customer') && <Field label="Email (optional)"><Input name="email" type="email" defaultValue={value('email')} /></Field>}
       {action === 'lead' && <>
-        <Field label="Service of interest"><Select name="service" required><option>Umrah</option><option>Hajj</option><option>General Travel</option><option>Other Tours</option></Select></Field>
-        <Field label="Lead source" hint="Where this enquiry came from."><Select name="source" required><option>WhatsApp</option><option>Facebook Ads</option><option>Instagram Ads</option><option>Website</option><option>Referral</option><option>Walk-in</option><option>Other</option></Select></Field>
-        <Field label="Preferred travel period"><Input name="travelPeriod" placeholder="e.g. Ramadan 2026" /></Field>
-        <Field label="Number of travellers"><Input name="count" type="number" min="1" defaultValue="1" /></Field>
-        <Field label="Follow-up date"><Input name="date" type="date" /></Field>
+        <Field label="Service of interest"><Select name="service" defaultValue={value('service', 'Umrah')} required><option>Umrah</option><option>Hajj</option><option>General Travel</option><option>Other Tours</option></Select></Field>
+        <Field label="Lead source" hint="Where this enquiry came from."><Select name="source" defaultValue={value('source', 'WhatsApp')} required><option>WhatsApp</option><option>Facebook Ads</option><option>Instagram Ads</option><option>Website</option><option>Referral</option><option>Walk-in</option><option>Other</option></Select></Field>
+        <Field label="Preferred travel period"><Input name="travelPeriod" defaultValue={value('travelPeriod')} placeholder="e.g. Ramadan 2026" /></Field>
+        <Field label="Number of travellers"><Input name="groupSize" type="number" min="1" defaultValue={value('groupSize', '1')} /></Field>
+        <Field label="Follow-up date"><Input name="followUp" type="date" defaultValue={value('followUp')} /></Field>
+        <Field label="Status"><Select name="status" defaultValue={value('status', 'New')}><option>New</option><option>Contacted</option><option>Follow-up Required</option><option>Interested</option><option>Converted</option><option>Not Interested</option><option>Lost</option></Select></Field>
       </>}
       {action === 'customer' && <>
-        <Field label="Nationality"><Input name="nationality" defaultValue="Nigerian" /></Field>
-        <Field label="City"><Input name="city" /></Field>
-        <Field label="Customer type" hint="Use historical for clients served before Headquarters."><Select name="historical"><option value="false">Current customer</option><option value="true">Historical customer</option></Select></Field>
+        <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
+        <Field label="City"><Input name="city" defaultValue={value('city')} /></Field>
+        <Field label="Customer type"><Select name="historical" defaultValue={value('historical', 'false')}><option value="false">Current customer</option><option value="true">Historical customer</option></Select></Field>
       </>}
       {action === 'booking' && <>
-        <Field label="Customer"><Select name="customerId" required>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</Select></Field>
-        <Field label="Package"><Select name="packageId" onChange={(event) => {
-          const selected = packages.find((item) => item.id === event.target.value)
-          const form = event.currentTarget.form
-          if (selected && form) {
-            ;(form.elements.namedItem('packageName') as HTMLInputElement).value = selected.name
-            ;(form.elements.namedItem('amount') as HTMLInputElement).value = String(selected.price)
-          }
-        }}><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active').map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Field>
-        <Field label="Package / arrangement name"><Input name="packageName" required /></Field>
-        <Field label="Agreed price"><Input name="amount" type="number" min="1" required /></Field>
-        <Field label="Departure date"><Input name="departureDate" type="date" required /></Field>
-        <Field label="Return date"><Input name="returnDate" type="date" required /></Field>
+        <Field label="Package / arrangement name"><Input name="packageName" defaultValue={value('packageName')} required /></Field>
+        <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" defaultValue={value('agreedPrice')} required /></Field>
+        <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
+        <Field label="Return date"><Input name="returnDate" type="date" defaultValue={value('returnDate')} required /></Field>
+        <Field label="Status"><Select name="status" defaultValue={value('status', 'Pending Confirmation')}><option>Enquiry</option><option>Pending Confirmation</option><option>Confirmed</option><option>In Preparation</option><option>Ready for Travel</option><option>Travelling</option><option>Completed</option><option>Cancelled</option></Select></Field>
       </>}
       {action === 'payment' && <>
-        <Field label="Booking"><Select name="bookingId" required>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} — {booking.packageName}</option>)}</Select></Field>
-        <Field label="Amount received"><Input name="amount" type="number" min="1" required /></Field>
-        <Field label="Payment date"><Input name="date" type="date" required /></Field>
-        <Field label="Payment method"><Select name="method"><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
-        <Field label="Transaction reference (optional)"><Input name="reference" /></Field>
+        <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} required /></Field>
+        <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date')} required /></Field>
+        <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
+        <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
+        <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
       </>}
       {action === 'traveller' && <>
-        <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} — {booking.packageName}</option>)}</Select></Field>
-        <Field label="Nationality"><Input name="nationality" defaultValue="Nigerian" /></Field>
-        <Field label="Traveller group (optional)"><Input name="group" placeholder="e.g. Bello Family" /></Field>
+        <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
+        <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
+        <Field label="Travel status"><Select name="status" defaultValue={value('status', 'Not Started')}><option>Not Started</option><option>Documents Pending</option><option>Documents Complete</option><option>Ready for Travel</option><option>Departed</option><option>Abroad</option><option>Returned</option></Select></Field>
       </>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="form-actions"><Button type="button" variant="secondary" onClick={() => setAction(null)}>Cancel</Button><Button type="submit">Save demo record</Button></div>
+      <div className="form-actions"><Button type="button" variant="secondary" onClick={close}>Cancel</Button><Button type="submit">{isEditing ? 'Save changes' : 'Save demo record'}</Button></div>
     </form>
   </Modal>
 }
