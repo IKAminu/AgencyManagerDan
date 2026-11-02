@@ -57,6 +57,7 @@ export function QuickActionModal() {
         <Field label="Customer type"><Select name="historical" defaultValue={value('historical', 'false')}><option value="false">Current customer</option><option value="true">Historical customer</option></Select></Field>
       </>}
       {action === 'booking' && <>
+        {!isEditing && <Field label="Customer"><Select name="customerId" required>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</Select></Field>}
         <Field label="Package / arrangement name"><Input name="packageName" defaultValue={value('packageName')} required /></Field>
         <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" defaultValue={value('agreedPrice')} required /></Field>
         <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
@@ -64,6 +65,7 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Pending Confirmation')}><option>Enquiry</option><option>Pending Confirmation</option><option>Confirmed</option><option>In Preparation</option><option>Ready for Travel</option><option>Travelling</option><option>Completed</option><option>Cancelled</option></Select></Field>
       </>}
       {action === 'payment' && <>
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>}
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} required /></Field>
         <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date')} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
@@ -71,6 +73,7 @@ export function QuickActionModal() {
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
       </>}
       {action === 'traveller' && <>
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>}
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
         <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
         <Field label="Travel status"><Select name="status" defaultValue={value('status', 'Not Started')}><option>Not Started</option><option>Documents Pending</option><option>Documents Complete</option><option>Ready for Travel</option><option>Departed</option><option>Abroad</option><option>Returned</option></Select></Field>
