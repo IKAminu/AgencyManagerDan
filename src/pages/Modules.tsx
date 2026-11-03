@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Download, ExternalLink, Filter, Info, Pencil, Plus, Search } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, PageHeader, Select, TableShell } from '@/components/ui'
-import { documents, supplierCosts } from '@/data/mockData'
+import { documents } from '@/data/mockData'
 import { useAppStore } from '@/hooks/useAppStore'
 import { bookingBalance, confirmedPaid, money, shortDate, supplierOutstanding, travellerCount } from '@/lib/business'
 import type { QuickActionType } from '@/types'
@@ -73,9 +73,18 @@ export function PaymentsPage() {
 
 export function SuppliersPage() {
   const controls = useFilter()
-  const { bookings } = useAppStore()
-  const rows = supplierCosts.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.supplier} ${item.category}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Supplier payments" description="Operational costs and payments owed to travel service providers." actionLabel="Record supplier payment" options={['Unpaid', 'Partially Paid', 'Paid', 'Overdue']} {...controls}><div className="finance-summary"><div><span>Total supplier costs</span><strong>{money(supplierCosts.reduce((sum, item) => sum + item.amount, 0))}</strong></div><div><span>Paid to suppliers</span><strong>{money(supplierCosts.reduce((sum, item) => sum + item.paid, 0))}</strong></div><div><span>Outstanding obligations</span><strong>{money(supplierCosts.reduce((sum, item) => sum + supplierOutstanding(item), 0))}</strong></div></div><TableShell><table><thead><tr><th>Supplier</th><th>Booking</th><th>Description</th><th>Due date</th><th>Cost</th><th>Paid</th><th>Outstanding</th><th>Status</th></tr></thead><tbody>{rows.map((item) => <tr key={item.id}><td><strong>{item.supplier}</strong></td><td>{bookings.find((booking) => booking.id === item.bookingId)?.reference}</td><td>{item.category}</td><td>{shortDate(item.dueDate)}</td><td>{money(item.amount)}</td><td>{money(item.paid)}</td><td><strong>{money(supplierOutstanding(item))}</strong></td><td><Badge>{item.status}</Badge></td></tr>)}</tbody></table></TableShell></Module>
+  const { bookings, supplierCosts, supplierPayments, setAction, setEditing } = useAppStore()
+  const rows = supplierCosts.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.supplier} ${item.category} ${bookings.find((booking) => booking.id === item.bookingId)?.reference || ''}`.toLowerCase().includes(controls.query.toLowerCase()))
+  const total = supplierCosts.reduce((sum, item) => sum + item.amount, 0)
+  const paid = supplierCosts.reduce((sum, item) => sum + item.paid, 0)
+  const outstanding = supplierCosts.reduce((sum, item) => sum + supplierOutstanding(item), 0)
+  return <Module title="Supplier payments" description="Track supplier obligations, amounts paid and remaining balances against each booking." actionLabel="Add supplier cost" actionType="supplier-cost" options={['Unpaid', 'Partially Paid', 'Paid', 'Overdue']} {...controls}>
+    <div className="finance-summary"><div><span>Total supplier costs</span><strong>{money(total)}</strong></div><div><span>Paid to suppliers</span><strong>{money(paid)}</strong></div><div><span>Outstanding obligations</span><strong>{money(outstanding)}</strong></div></div>
+    <TableShell><table><thead><tr><th>Supplier</th><th>Booking</th><th>Description</th><th>Due date</th><th>Cost</th><th>Paid</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead><tbody>{rows.map((item) => <tr key={item.id}><td><strong>{item.supplier}</strong></td><td>{bookings.find((booking) => booking.id === item.bookingId)?.reference}</td><td>{item.category}</td><td>{shortDate(item.dueDate)}</td><td>{money(item.amount)}</td><td>{money(item.paid)}</td><td><strong>{money(supplierOutstanding(item))}</strong></td><td><Badge>{item.status}</Badge></td><td><div className="table-actions"><Button variant="secondary" onClick={() => { setEditing({ type: 'supplier-cost', id: item.id }); setAction('supplier-cost') }}><Pencil size={14} /> Edit</Button>{supplierOutstanding(item) > 0 && <Button variant="secondary" onClick={() => setAction('supplier-payment')}>Record payment</Button>}</div></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No supplier costs found" text="Add a supplier cost or adjust your search and filters." />}</TableShell>
+    <h2 className="section-heading">Payment history</h2>
+    <TableShell><table><thead><tr><th>Date</th><th>Supplier cost</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>{supplierPayments.map((payment) => { const cost = supplierCosts.find((item) => item.id === payment.supplierCostId); return <tr key={payment.id}><td>{shortDate(payment.date)}</td><td>{cost ? `${cost.supplier} · ${cost.category}` : 'Supplier cost unavailable'}</td><td>{money(payment.amount)}</td><td>{payment.method}</td><td>{payment.reference || '—'}</td></tr> })}</tbody></table>{!supplierPayments.length && <EmptyState title="No supplier payments recorded" text="Payments you record against supplier costs will appear here." />}</TableShell>
+    <p className="info-note"><Info size={16} /> Supplier payments are separate transactions. Each payment updates the related cost's paid and outstanding totals.</p>
+  </Module>
 }
 
 export function DocumentsPage() {
