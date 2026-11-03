@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, Users, WalletCards, X } from 'lucide-react'
-import { appConfig } from '@/config/app'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
@@ -27,10 +26,11 @@ export function AppLayout() {
   const accountRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
-  const { leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
+  const { mode, leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
 
   useEffect(() => {
     let active = true
+    if (mode === 'demo') { setAccountName('Guest user'); setAccountEmail('Demo access'); return () => { active = false } }
     supabase?.auth.getUser().then(({ data }) => {
       if (!active || !data.user) return
       const user = data.user
@@ -42,7 +42,7 @@ export function AppLayout() {
       setAccountName(metadataName || knownNames[email.toLowerCase()] || fallbackName || 'Dandurgu user')
     })
     return () => { active = false }
-  }, [])
+  }, [mode])
 
   useEffect(() => {
     const closeOnOutsideClick = (event: PointerEvent) => {
@@ -100,7 +100,7 @@ export function AppLayout() {
     <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><img className="brand-logo" src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" /><div className="brand-name"><strong>Dandurgu</strong><span>Headquarters</span></div><IconButton label="Close navigation" className="mobile-close" onClick={() => setMenuOpen(false)}><X size={18} /></IconButton></div>
       <nav>{groups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} /><span>{label}</span></NavLink>)}</div>)}</nav>
-      <div className="sidebar-foot"><span className="status-dot" /> <div><strong>{appConfig.useMockData ? 'Demo mode' : 'Supabase mode'}</strong><span>{appConfig.useMockData ? 'Session-only mock records' : 'Shared database records'}</span></div></div>
+      <div className={`sidebar-foot ${mode === 'live' ? 'mode-live' : 'mode-demo'}`}><span className="status-dot" /> <div><strong>{mode === 'live' ? 'Live Mode' : 'Demo Mode'}</strong><span>{mode === 'live' ? 'Connected to agency records' : 'Session-only sample records'}</span></div></div>
     </aside>
     {menuOpen && <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />}
     <div className="main-column">
@@ -121,9 +121,9 @@ export function AppLayout() {
             {accountOpen && <section className="account-popover" aria-label="Account centre">
               <div className="account-identity"><div className="account-avatar">{(accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('') || 'DU').toUpperCase()}</div><div><strong>{accountName || 'Dandurgu user'}</strong><span>{accountEmail}</span></div></div>
               <div className="account-detail"><span>Workspace</span><strong>Dandurgu Headquarters</strong></div>
-              <div className="account-detail"><span>Access</span><strong>Authorised account</strong></div>
-              <div className="account-security"><ShieldCheck size={16} /><div><strong>Two-step verification</strong><span>Authenticator app enabled</span></div></div>
-              <button className="account-logout" type="button" onClick={() => { setAccountOpen(false); void supabase?.auth.signOut() }}><LogOut size={16} /> Sign out</button>
+              <div className="account-detail"><span>Access</span><strong>{mode === 'live' ? 'Authorised account' : 'Guest demonstration'}</strong></div>
+              {mode === 'live' ? <div className="account-security"><ShieldCheck size={16} /><div><strong>Two-step verification</strong><span>Authenticator app enabled</span></div></div> : <div className="account-security account-demo-note"><ShieldCheck size={16} /><div><strong>Demo environment</strong><span>Changes are not saved to the agency database</span></div></div>}
+              <button className="account-logout" type="button" onClick={() => { setAccountOpen(false); if (mode === 'live') void supabase?.auth.signOut(); else window.location.reload() }}><LogOut size={16} /> {mode === 'live' ? 'Sign out' : 'Exit demo'}</button>
             </section>}
           </div>
         </div>
