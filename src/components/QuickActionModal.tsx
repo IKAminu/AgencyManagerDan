@@ -156,6 +156,7 @@ export function QuickActionModal() {
         <Field label="Traveller's full name"><Input name="name" defaultValue={value('name')} required /></Field>
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
         <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
+        <Field label="Document readiness"><Select name="documentsComplete" defaultValue={value('documentsComplete', 'false')}><option value="false">Documents incomplete / pending</option><option value="true">Documents complete</option></Select></Field>
         <Field label="Travel status"><Select name="status" defaultValue={value('status', 'Not Started')}><option>Not Started</option><option>Documents Pending</option><option>Documents Complete</option><option>Ready for Travel</option><option>Departed</option><option>Abroad</option><option>Returned</option></Select></Field>
       </>}
       {error && <p className="form-error" role="alert">{error}</p>}
