@@ -20,9 +20,6 @@ export function QuickActionModal() {
   const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
-  const [paymentCustomerChoice, setPaymentCustomerChoice] = useState('')
-  const [paymentBookingId, setPaymentBookingId] = useState('')
-  const [paymentPackageId, setPaymentPackageId] = useState('')
   if (!action) return null
 
   const current = editing?.type === action ? ({
@@ -37,7 +34,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setPaymentCustomerChoice(''); setPaymentBookingId(''); setPaymentPackageId('') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package') }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : fallback
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -48,7 +45,7 @@ export function QuickActionModal() {
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
     if (action === 'payment' && !isEditing) {
-      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1)) || customers.find((customer) => customer.id === paymentCustomerChoice)
+      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1))
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
       if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
