@@ -31,11 +31,11 @@ export const initialPackages: TravelPackage[] = [
 ]
 
 export const initialBookings: Booking[] = [
-  { id: 'b1', reference: 'BKG-2026-0148', customerId: 'c1', packageId: 'p2', packageName: 'Essential Umrah', agreedPrice: 2450000, currency: 'NGN', bookingDate: iso(-15), departureDate: iso(4), returnDate: iso(14), status: 'In Preparation', supplier: 'Al-Hidayah Travel Services' },
-  { id: 'b2', reference: 'BKG-2026-0141', customerId: 'c2', packageId: 'p1', packageName: 'Ramadan Umrah — Last 10 Nights', agreedPrice: 6500000, currency: 'NGN', bookingDate: iso(-35), departureDate: iso(-6), returnDate: iso(8), status: 'Travelling', supplier: 'Al-Hidayah Travel Services' },
-  { id: 'b3', reference: 'BKG-2025-0089', customerId: 'c3', packageName: 'Custom Umrah Arrangement', agreedPrice: 3000000, currency: 'NGN', bookingDate: iso(-145), departureDate: iso(-120), returnDate: iso(-108), status: 'Completed', historical: true },
-  { id: 'b4', reference: 'BKG-2026-0153', customerId: 'c4', packageId: 'p2', packageName: 'Essential Umrah', agreedPrice: 4900000, currency: 'NGN', bookingDate: iso(-9), departureDate: iso(6), returnDate: iso(16), status: 'Confirmed', supplier: 'Rahma Ground Handling' },
-  { id: 'b5', reference: 'BKG-2026-0157', customerId: 'c5', packageId: 'p3', packageName: 'Hajj Premium Programme', agreedPrice: 8900000, currency: 'NGN', bookingDate: iso(-5), departureDate: iso(45), returnDate: iso(73), status: 'Pending Confirmation' },
+  { id: 'b1', reference: 'BKG-2026-0148', customerId: 'c1', partySize: 1, packageId: 'p2', packageName: 'Essential Umrah', agreedPrice: 2450000, currency: 'NGN', bookingDate: iso(-15), departureDate: iso(4), returnDate: iso(14), status: 'In Preparation', supplier: 'Al-Hidayah Travel Services' },
+  { id: 'b2', reference: 'BKG-2026-0141', customerId: 'c2', partySize: 2, packageId: 'p1', packageName: 'Ramadan Umrah — Last 10 Nights', agreedPrice: 6500000, currency: 'NGN', bookingDate: iso(-35), departureDate: iso(-6), returnDate: iso(8), status: 'Travelling', supplier: 'Al-Hidayah Travel Services' },
+  { id: 'b3', reference: 'BKG-2025-0089', customerId: 'c3', partySize: 1, packageName: 'Custom Umrah Arrangement', agreedPrice: 3000000, currency: 'NGN', bookingDate: iso(-145), departureDate: iso(-120), returnDate: iso(-108), status: 'Completed', historical: true },
+  { id: 'b4', reference: 'BKG-2026-0153', customerId: 'c4', partySize: 2, packageId: 'p2', packageName: 'Essential Umrah', agreedPrice: 4900000, currency: 'NGN', bookingDate: iso(-9), departureDate: iso(6), returnDate: iso(16), status: 'Confirmed', supplier: 'Rahma Ground Handling' },
+  { id: 'b5', reference: 'BKG-2026-0157', customerId: 'c5', partySize: 1, packageId: 'p3', packageName: 'Hajj Premium Programme', agreedPrice: 8900000, currency: 'NGN', bookingDate: iso(-5), departureDate: iso(45), returnDate: iso(73), status: 'Pending Confirmation' },
 ]
 
 export const initialTravellers: Traveller[] = [
