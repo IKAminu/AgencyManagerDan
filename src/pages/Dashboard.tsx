@@ -9,7 +9,7 @@ export function Dashboard() {
   const { leads, bookings, customers, payments, travellers, setAction } = useAppStore()
   const activeLeads = leads.filter((lead) => !['Converted', 'Lost', 'Not Interested'].includes(lead.status))
   const activeBookings = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status))
-  const upcoming = bookings.filter((booking) => daysFromToday(booking.departureDate) >= 0 && daysFromToday(booking.departureDate) <= 7)
+  const upcoming = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status) && daysFromToday(booking.departureDate) >= 0 && daysFromToday(booking.departureDate) <= 7)
   const abroad = travellers.filter((traveller) => traveller.status === 'Abroad')
   const outstanding = bookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0)
   const received = payments.filter((payment) => payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)
