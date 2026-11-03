@@ -6,6 +6,8 @@
 - Coherent Nigerian demonstration records and derived dashboard/financial calculations.
 - Global search without passport data, filters, notifications, mobile navigation and quick actions.
 - Session-working forms for leads, customers (including historical), bookings, payments and travellers.
+- Traveller records can optionally link to an existing customer profile while dependants remain traveller-only records.
+- Customer and traveller tables show their explicit profile relationships; primary mock travellers are linked to their customer profiles.
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
 - Supabase client/service boundary, PWA manifest and GitHub Pages workflow.
 
@@ -19,6 +21,7 @@
 
 - Tables provide search and status filters; full column sorting and server pagination await the data backend.
 - Main creation flows work; complete edit/archive/convert/reversal/group-management detail workflows need persisted transactions.
+- Traveller-to-customer links currently exist in the mock-data model only; they are not persisted to Supabase until the database schema and service layer are implemented.
 - Authentication integration points exist, but real protected routes require Supabase Auth.
 
 ## Not configured
