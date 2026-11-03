@@ -39,13 +39,13 @@ export const initialBookings: Booking[] = [
 ]
 
 export const initialTravellers: Traveller[] = [
-  { id: 't1', name: 'Fatima Abdullahi', bookingId: 'b1', nationality: 'Nigerian', status: 'Documents Pending', documentsComplete: false },
-  { id: 't2', name: 'Ibrahim Lawal', bookingId: 'b2', nationality: 'Nigerian', status: 'Abroad', group: 'Lawal Family', documentsComplete: true },
+  { id: 't1', name: 'Fatima Abdullahi', customerId: 'c1', bookingId: 'b1', nationality: 'Nigerian', status: 'Documents Pending', documentsComplete: false },
+  { id: 't2', name: 'Ibrahim Lawal', customerId: 'c2', bookingId: 'b2', nationality: 'Nigerian', status: 'Abroad', group: 'Lawal Family', documentsComplete: true },
   { id: 't3', name: 'Hauwa Lawal', bookingId: 'b2', nationality: 'Nigerian', status: 'Abroad', group: 'Lawal Family', documentsComplete: true },
-  { id: 't4', name: 'Halima Garba', bookingId: 'b3', nationality: 'Nigerian', status: 'Returned', documentsComplete: true },
-  { id: 't5', name: 'Emeka Nwosu', bookingId: 'b4', nationality: 'Nigerian', status: 'Ready for Travel', group: 'Nwosu Couple', documentsComplete: true },
+  { id: 't4', name: 'Halima Garba', customerId: 'c3', bookingId: 'b3', nationality: 'Nigerian', status: 'Returned', documentsComplete: true },
+  { id: 't5', name: 'Emeka Nwosu', customerId: 'c4', bookingId: 'b4', nationality: 'Nigerian', status: 'Ready for Travel', group: 'Nwosu Couple', documentsComplete: true },
   { id: 't6', name: 'Adaeze Nwosu', bookingId: 'b4', nationality: 'Nigerian', status: 'Documents Pending', group: 'Nwosu Couple', documentsComplete: false },
-  { id: 't7', name: 'Safiya Mohammed', bookingId: 'b5', nationality: 'Nigerian', status: 'Not Started', documentsComplete: false },
+  { id: 't7', name: 'Safiya Mohammed', customerId: 'c5', bookingId: 'b5', nationality: 'Nigerian', status: 'Not Started', documentsComplete: false },
 ]
 
 export const initialPayments: Payment[] = [
