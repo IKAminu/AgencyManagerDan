@@ -10,11 +10,11 @@ function exportVisibleTable() {
   if (!table) return
   const csv = Array.from(table.querySelectorAll('tr')).map((row) =>
     Array.from(row.querySelectorAll('th, td')).map((cell) => {
-      const value = (cell.textContent || '').replace(/\\s+/g, ' ').trim()
+      const value = (cell.textContent || '').replace(/\s+/g, ' ').trim()
       return '"' + value.replace(/"/g, '""') + '"'
     }).join(',')
-  ).join('\\r\\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  ).join('\r\n')
+  const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
