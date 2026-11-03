@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
@@ -21,7 +21,7 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const beginSecondFactor = async (session: Session) => {
+  const beginSecondFactor = async () => {
     const { data: factors, error: factorsError } = await supabase!.auth.mfa.listFactors()
     if (factorsError) throw factorsError
 
@@ -50,7 +50,7 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
     setStep('enroll')
   }
 
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
     setBusy(true)
@@ -60,7 +60,7 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
       const { data, error: loginError } = await supabase!.auth.signInWithPassword({ email: normalizedEmail, password })
       if (loginError) throw loginError
       if (!data.session) throw new Error('Sign-in did not return a valid session.')
-      await beginSecondFactor(data.session)
+      await beginSecondFactor()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in. Please try again.')
     } finally {
