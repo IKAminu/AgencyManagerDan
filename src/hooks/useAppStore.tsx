@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { todayDate } from '@/lib/business'
 import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, initialSupplierPayments, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
@@ -26,7 +27,7 @@ type AppStore = {
 const StoreContext = createContext<AppStore | null>(null)
 const id = () => crypto.randomUUID()
 const reference = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-const today = () => new Date().toISOString().slice(0, 10)
+const today = todayDate
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState(initialLeads)
