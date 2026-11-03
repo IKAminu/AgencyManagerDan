@@ -3,6 +3,6 @@
   "description": "Internal travel operations management for Dandurgu Air Travel & Tours Ltd.",
   "language": "en",
   "robots": { "index": false },
-  "icons": { "icon": "/app-icon.svg" },
+  "icons": { "icon": "" },
   "accessibility": { "addBypassLinks": true }
 }
