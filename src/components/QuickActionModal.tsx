@@ -144,7 +144,7 @@ export function QuickActionModal() {
         <Field label="Payment due date"><Input name="dueDate" type="date" required /></Field>
       </>}
       {action === 'supplier-payment' && <>
-        <Field label="Supplier cost"><Select name="supplierCostId" required>{supplierCosts.filter((cost) => cost.paid < cost.amount).map((cost) => <option key={cost.id} value={cost.id}>{cost.supplier} · {cost.category} · Outstanding ₦{(cost.amount-cost.paid).toLocaleString('en-NG')}</option>)}</Select></Field>
+        <Field label="Supplier cost"><Select name="supplierCostId" required defaultValue={editing?.type === 'supplier-payment' ? editing.id : ''}><option value="">Select supplier cost</option>{supplierCosts.filter((cost) => cost.paid < cost.amount).map((cost) => <option key={cost.id} value={cost.id}>{cost.supplier} · {cost.category} · Outstanding ₦{(cost.amount-cost.paid).toLocaleString('en-NG')}</option>)}</Select></Field>
         <Field label="Amount paid (NGN)"><Input name="amount" type="number" min="1" required /></Field>
         <Field label="Payment date"><Input name="date" type="date" required /></Field>
         <Field label="Payment method"><Select name="method"><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
