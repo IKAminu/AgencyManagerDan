@@ -8,6 +8,9 @@
 - Session-working forms for leads, customers (including historical), bookings, payments and travellers.
 - Traveller records can optionally link to an existing customer profile while dependants remain traveller-only records.
 - Customer and traveller tables show their explicit profile relationships; primary mock travellers are linked to their customer profiles.
+- Traveller operations include booking-specific family/group summaries, member counts, document-readiness totals and individual travel statuses. Each traveller retains their own name independently of an optional linked customer profile.
+- Traveller document readiness is tracked separately from travel status.
+- Payment confirmation validates the booking's remaining balance, including when confirming a previously pending payment.
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
 - Supabase client/service boundary, PWA manifest and GitHub Pages workflow.
 
