@@ -280,3 +280,30 @@
 .auth-back { align-self: center; border: 0; background: transparent; margin-top: 1rem; color: var(--color-muted); font-size: .7rem; text-decoration: underline; }
 .auth-footnote { margin: 1.4rem 0 0; border-top: 1px solid var(--color-line); padding-top: .9rem; color: var(--color-muted); font-size: .63rem; text-align: center; }
 .auth-loading { display: grid; min-height: 100vh; place-items: center; background: #f7f5f1; color: var(--color-muted); font-size: .8rem; }
+
+/* Header popovers and account centre */
+.notifications { position: absolute; z-index: 60; top: calc(100% + .65rem); right: 0; width: 20rem; max-height: min(70vh, 32rem); overflow-y: auto; border: 1px solid var(--color-line); border-radius: .65rem; background: white; box-shadow: 0 .8rem 2.5rem rgb(35 31 27 / 14%); }
+.account-wrap { position: relative; }
+.account-trigger { display: grid; height: 2.35rem; width: 2.35rem; place-items: center; border: 1px solid #e5ded4; border-radius: 50%; background: #f5eee6; color: #8d4b1e; font-size: .72rem; font-weight: 750; letter-spacing: .02em; }
+.account-trigger:hover, .account-trigger[aria-expanded="true"] { border-color: #d8b18f; background: #f2e4d6; }
+.account-popover { position: absolute; z-index: 60; top: calc(100% + .65rem); right: 0; width: min(19rem, calc(100vw - 1.2rem)); overflow: hidden; border: 1px solid var(--color-line); border-radius: .7rem; background: white; box-shadow: 0 .8rem 2.5rem rgb(35 31 27 / 14%); }
+.account-identity { display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--color-line); padding: 1rem; }
+.account-avatar { display: grid; height: 2.65rem; width: 2.65rem; flex: none; place-items: center; border-radius: 50%; background: #f5eee6; color: #8d4b1e; font-size: .8rem; font-weight: 750; }
+.account-identity > div:last-child { min-width: 0; }
+.account-identity strong, .account-identity span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-identity strong { color: var(--color-ink); font-size: .78rem; }
+.account-identity span { margin-top: .18rem; color: var(--color-muted); font-size: .66rem; }
+.account-detail { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-bottom: 1px solid #f1eee9; padding: .7rem 1rem; }
+.account-detail span { color: var(--color-muted); font-size: .66rem; }
+.account-detail strong { color: #514c45; font-size: .67rem; font-weight: 650; text-align: right; }
+.account-security { display: flex; align-items: flex-start; gap: .55rem; margin: .75rem; border: 1px solid #dce8df; border-radius: .5rem; background: #f6faf7; padding: .65rem .7rem; color: #397052; }
+.account-security svg { flex: none; margin-top: .08rem; }
+.account-security strong, .account-security span { display: block; }
+.account-security strong { font-size: .68rem; }
+.account-security span { margin-top: .12rem; color: #66806f; font-size: .62rem; }
+.account-logout { display: flex; width: 100%; align-items: center; gap: .55rem; border: 0; border-top: 1px solid var(--color-line); background: white; padding: .85rem 1rem; color: #a3443d; font-size: .72rem; font-weight: 650; text-align: left; }
+.account-logout:hover { background: #fff6f5; }
+@media (max-width: 640px) {
+  .notifications { position: fixed; top: 4rem; right: .6rem; width: min(20rem, calc(100vw - 1.2rem)); }
+  .account-popover { position: fixed; top: 4rem; right: .6rem; }
+}
