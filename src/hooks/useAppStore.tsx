@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { todayDate } from '@/lib/business'
 import { loadLiveStore, saveLiveStore } from '@/lib/supabaseStore'
 import { supabase } from '@/lib/supabase'
+import { waitForMinimumLoadingTime } from '@/lib/loading'
 import type { AppMode } from '@/auth/AuthGate'
 import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, initialSupplierPayments, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
@@ -68,7 +69,8 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     let active = true
     setDataReady(false)
     setDataError(null)
-    loadLiveStore().then((data) => {
+    loadLiveStore().then(async (data) => {
+      await waitForMinimumLoadingTime()
       if (!active) return
       skipNextSave.current = true
       setLeads(data.leads); setCustomers(data.customers); setPackages(data.packages)
