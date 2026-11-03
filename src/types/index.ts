@@ -97,6 +97,15 @@ export interface SupplierCost {
   status: 'Unpaid' | 'Partially Paid' | 'Paid' | 'Overdue'
 }
 
+export interface SupplierPayment {
+  id: string
+  supplierCostId: string
+  amount: number
+  date: string
+  method: 'Bank Transfer' | 'Cash' | 'POS' | 'Other'
+  reference?: string
+}
+
 export interface DocumentRecord {
   id: string
   name: string
@@ -108,4 +117,4 @@ export interface DocumentRecord {
   status: 'Valid' | 'Expiring Soon' | 'Needs Review'
 }
 
-export type QuickActionType = 'lead' | 'customer' | 'booking' | 'payment' | 'traveller' | 'package'
+export type QuickActionType = 'lead' | 'customer' | 'booking' | 'payment' | 'traveller' | 'package' | 'supplier-cost' | 'supplier-payment'
