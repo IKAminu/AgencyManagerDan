@@ -102,7 +102,9 @@ export function QuickActionModal() {
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} required /></Field>
         <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
-        <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
+        {!isEditing && <Field label="Status"><Select name="status" defaultValue="Confirmed"><option>Pending</option><option>Confirmed</option></Select></Field>}
+        {isEditing && current?.status === 'Pending' && <Field label="Status"><Select name="status" defaultValue="Pending"><option>Pending</option><option>Confirmed</option><option>Failed</option></Select></Field>}
+        {isEditing && current?.status !== 'Pending' && <Field label="Status"><Input value={value('status')} readOnly /></Field>}
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
       </>}
       {action === 'document' && <>
