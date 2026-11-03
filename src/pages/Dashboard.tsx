@@ -37,7 +37,7 @@ export function Dashboard() {
           const count = travellerCount(booking.id, travellers)
           const missing = travellers.filter((item) => item.bookingId === booking.id && !item.documentsComplete).length
           return <tr key={booking.id}><td><strong>{booking.reference}</strong></td><td>{customer?.name}</td><td>{booking.packageName}</td><td>{shortDate(booking.departureDate)}</td><td>{count}</td><td><Badge>{booking.status}</Badge></td><td>{missing ? `${missing} document check${missing > 1 ? 's' : ''}` : 'Ready'}</td></tr>
-        })}</tbody></table></TableShell>
+        })}</tbody></table>{!upcoming.length && <div className="empty"><strong>No upcoming departures</strong><p>Bookings departing within the next seven days will appear here.</p></div>}</TableShell>
       </section>
       <section className="content-section">
         <div className="section-title"><div><h2>Pending follow-ups</h2><p>Due and overdue lead activity.</p></div><Link to="/leads">Open leads</Link></div>
@@ -52,7 +52,7 @@ export function Dashboard() {
       </section>
       <section className="content-section span-two">
         <div className="section-title"><div><h2>Outstanding balances</h2><p>Calculated from agreed prices and confirmed transactions.</p></div><Link to="/payments">Finance overview</Link></div>
-        <TableShell><table><thead><tr><th>Customer</th><th>Booking</th><th>Agreed price</th><th>Confirmed paid</th><th>Outstanding</th></tr></thead><tbody>{bookings.filter((booking) => bookingBalance(booking, payments) > 0).slice(0, 4).map((booking) => <tr key={booking.id}><td>{customers.find((item) => item.id === booking.customerId)?.name}</td><td><strong>{booking.reference}</strong></td><td>{money(booking.agreedPrice)}</td><td>{money(confirmedPaid(booking.id, payments))}</td><td><strong>{money(bookingBalance(booking, payments))}</strong></td></tr>)}</tbody></table></TableShell>
+        <TableShell><table><thead><tr><th>Customer</th><th>Booking</th><th>Agreed price</th><th>Confirmed paid</th><th>Outstanding</th></tr></thead><tbody>{bookings.filter((booking) => bookingBalance(booking, payments) > 0).slice(0, 4).map((booking) => <tr key={booking.id}><td>{customers.find((item) => item.id === booking.customerId)?.name}</td><td><strong>{booking.reference}</strong></td><td>{money(booking.agreedPrice)}</td><td>{money(confirmedPaid(booking.id, payments))}</td><td><strong>{money(bookingBalance(booking, payments))}</strong></td></tr>)}</tbody></table>{!bookings.some((booking) => bookingBalance(booking, payments) > 0) && <div className="empty"><strong>No outstanding balances</strong><p>Bookings with an unpaid balance will appear here.</p></div>}</TableShell>
       </section>
     </div>
   </div>
