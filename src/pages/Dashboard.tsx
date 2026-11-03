@@ -6,7 +6,7 @@ import { bookingBalance, confirmedPaid, daysFromToday, money, shortDate, travell
 import type { QuickActionType } from '@/types'
 
 export function Dashboard() {
-  const { leads, bookings, customers, payments, travellers, setAction } = useAppStore()
+  const { mode, leads, bookings, customers, payments, travellers, setAction } = useAppStore()
   const activeLeads = leads.filter((lead) => !['Converted', 'Lost', 'Not Interested'].includes(lead.status))
   const activeBookings = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status))
   const upcoming = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status) && daysFromToday(booking.departureDate) >= 0 && daysFromToday(booking.departureDate) <= 7)
@@ -18,7 +18,7 @@ export function Dashboard() {
   const metrics = [
     { label: 'Active leads', value: activeLeads.length, detail: `${leads.filter((lead) => lead.status === 'New').length} awaiting attention`, icon: Users, to: '/leads' },
     { label: 'Active bookings', value: activeBookings.length, detail: `${upcoming.length} departing soon`, icon: CalendarDays, to: '/bookings' },
-    { label: 'Confirmed payments', value: money(received), detail: 'Across all demo records', icon: CircleDollarSign, to: '/payments' },
+    { label: 'Confirmed payments', value: money(received), detail: 'Across recorded transactions', icon: CircleDollarSign, to: '/payments' },
     { label: 'Outstanding balance', value: money(outstanding), detail: 'Calculated from transactions', icon: Clock3, to: '/payments' },
     { label: 'Travellers abroad', value: abroad.length, detail: `${travellers.filter((item) => item.status === 'Ready for Travel').length} ready to travel`, icon: PlaneTakeoff, to: '/travellers' },
     { label: 'Upcoming returns', value: bookings.filter((booking) => daysFromToday(booking.returnDate) >= 0 && daysFromToday(booking.returnDate) <= 10).length, detail: 'Within the next 10 days', icon: PlaneLanding, to: '/travellers' },
@@ -26,7 +26,7 @@ export function Dashboard() {
 
   return <div className="page">
     <PageHeader title="Good morning" description="Here is what needs attention across Dandurgu today." action={<div className="date-chip"><CalendarDays size={16} /> {shortDate(new Date().toISOString().slice(0, 10))}</div>} />
-    <section className="demo-banner"><div><strong>Demonstration workspace</strong><span>Records created here are session-only. Supabase is prepared but not connected.</span></div><Link to="/settings">View integration status <ArrowRight size={15} /></Link></section>
+    {mode === 'demo' && <section className="demo-banner"><div><strong>Demo workspace</strong><span>Sample records only. Changes stay in this session and are discarded when you leave.</span></div><Link to="/settings">View workspace settings <ArrowRight size={15} /></Link></section>}
     <section className="metrics-grid">{metrics.map(({ label, value, detail, icon: Icon, to }) => <Link className="metric" to={to} key={label}><div className="metric-head"><span>{label}</span><Icon size={18} /></div><strong>{value}</strong><p>{detail}</p></Link>)}</section>
     <section className="quick-strip"><div><strong>Quick actions</strong><span>Start a common task without leaving the dashboard.</span></div><div>{quickActions.map((action) => <Button variant="secondary" key={action.type} onClick={() => setAction(action.type)}>{action.label}</Button>)}</div></section>
     <div className="dashboard-grid">
