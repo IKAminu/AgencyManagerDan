@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, supplierCosts as initialSupplierCosts } from '@/data/mockData'
-import type { Booking, Customer, Lead, Payment, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
+import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
+import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
 type AppStore = {
   leads: Lead[]
@@ -11,6 +11,7 @@ type AppStore = {
   travellers: Traveller[]
   supplierCosts: SupplierCost[]
   supplierPayments: SupplierPayment[]
+  documents: DocumentRecord[]
   action: QuickActionType | null
   setAction: (action: QuickActionType | null) => void
   addRecord: (type: QuickActionType, values: Record<string, string>) => void
@@ -33,10 +34,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [travellers, setTravellers] = useState(initialTravellers)
   const [supplierCosts, setSupplierCosts] = useState<SupplierCost[]>(initialSupplierCosts)
   const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
+  const [documents, setDocuments] = useState<DocumentRecord[]>(initialDocuments)
   const [action, setAction] = useState<QuickActionType | null>(null)
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
 
   const addRecord = (type: QuickActionType, values: Record<string, string>) => {
+    if (type === 'document') setDocuments((items) => [{ id: id(), name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, recordedAt: today(), status: values.status as DocumentRecord['status'] }, ...items])
     if (type === 'supplier-cost') setSupplierCosts((items) => [{ id: id(), bookingId: values.bookingId, supplier: values.supplier, category: values.category, amount: Number(values.amount), dueDate: values.dueDate, paid: 0, status: 'Unpaid' }, ...items])
     if (type === 'supplier-payment') {
       const payment: SupplierPayment = { id: id(), supplierCostId: values.supplierCostId, amount: Number(values.amount), date: values.date, method: values.method as SupplierPayment['method'], reference: values.reference || undefined }
@@ -91,7 +94,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, editing, leads, customers])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, editing, leads, customers])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
