@@ -12,10 +12,11 @@ const details: Record<QuickActionType, { title: string; description: string }> =
   package: { title: 'Create package', description: 'Add a package to the internal demonstration catalogue.' },
   'supplier-cost': { title: 'Record supplier cost', description: 'Record an amount owed to a supplier for a booking.' },
   'supplier-payment': { title: 'Record supplier payment', description: 'Record money paid against an existing supplier cost.' },
+  document: { title: 'Add document link', description: 'Save a link to a document stored in an approved location.' },
 }
 
 export function QuickActionModal() {
-  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts } = useAppStore()
+  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   if (!action) return null
 
@@ -28,6 +29,7 @@ export function QuickActionModal() {
     package: packages.find((item) => item.id === editing.id),
     'supplier-cost': supplierCosts.find((item) => item.id === editing.id),
     'supplier-payment': undefined,
+    document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
   const close = () => { setAction(null); setEditing(null); setError('') }
@@ -83,6 +85,14 @@ export function QuickActionModal() {
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
+      </>}
+      {action === 'document' && <>
+        <Field label="Document name"><Input name="name" defaultValue={value('name')} required /></Field>
+        <Field label="Category"><Select name="category" defaultValue={value('category', 'Passport')}><option>Passport</option><option>Visa</option><option>Flight Ticket</option><option>Hotel Voucher</option><option>Payment Receipt</option><option>Invoice</option><option>Other</option></Select></Field>
+        <Field label="Related record type"><Select name="relatedType" defaultValue={value('relatedType', 'Booking')}><option>Customer</option><option>Booking</option><option>Traveller</option><option>Payment</option><option>Supplier</option></Select></Field>
+        <Field label="Related record reference"><Input name="relatedReference" defaultValue={value('relatedReference')} placeholder="Customer ID, booking reference, etc." required /></Field>
+        <Field label="Document URL"><Input name="url" type="url" defaultValue={value('url')} placeholder="https://..." required /></Field>
+        <Field label="Review status"><Select name="status" defaultValue={value('status', 'Needs Review')}><option>Valid</option><option>Expiring Soon</option><option>Needs Review</option></Select></Field>
       </>}
       {action === 'supplier-cost' && <>
         <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>
