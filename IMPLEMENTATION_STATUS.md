@@ -12,7 +12,7 @@
 - Traveller document readiness is tracked separately from travel status.
 - Payment confirmation validates the booking's remaining balance, including when confirming a previously pending payment.
 - Payment and supplier transaction forms validate positive finite amounts and required transaction dates; supplier costs also validate their due date and optional booking reference.
-- Supplier payment history now records confirmed and reversed transactions with a required reversal reason; reversing a supplier payment restores the related supplier obligation and recalculates its status.
+- Supplier disbursement history records confirmed and voided payment records with a required reason; voiding an incorrect or failed record restores the related supplier obligation and recalculates its status.
 - Recording a supplier payment from an individual supplier-cost row preselects that exact cost, reducing the risk of allocating money to the wrong obligation.
 - Traveller overview metrics are presented in responsive summary cards, with supporting descriptions and a distinct attention state.
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
