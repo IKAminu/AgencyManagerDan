@@ -83,6 +83,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }
 
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
+    if (type === 'document') setDocuments((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, status: values.status as DocumentRecord['status'] } : item))
     if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => item.id === recordId ? { ...item, supplier: values.supplier, category: values.category, amount: Math.max(Number(values.amount), item.paid), dueDate: values.dueDate, status: item.paid >= Number(values.amount) ? 'Paid' : item.paid > 0 ? 'Partially Paid' : 'Unpaid' } : item))
     if (type === 'package') setPackages((items) => items.map((item) => item.id === recordId ? { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), availability: Number(values.availability || 0), status: values.status as TravelPackage['status'] } : item))
     if (type === 'lead' && values.status === 'Converted') convertLead(recordId, values)
