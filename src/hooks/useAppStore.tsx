@@ -20,7 +20,7 @@ type AppStore = {
   updateRecord: (type: QuickActionType, recordId: string, values: Record<string, string>) => void
   convertLead: (leadId: string, values?: Record<string, string>) => void
   reversePayment: (paymentId: string, reason: string) => void
-  reverseSupplierPayment: (paymentId: string, reason: string) => void
+  voidSupplierPayment: (paymentId: string, reason: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
@@ -104,7 +104,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setPayments((items) => items.map((payment) => payment.id === paymentId && payment.status === 'Confirmed' ? { ...payment, status: 'Reversed', reversalReason: reason.trim() } : payment))
   }
 
-  const reverseSupplierPayment = (paymentId: string, reason: string) => {
+  const voidSupplierPayment = (paymentId: string, reason: string) => {
     const cleanReason = reason.trim()
     if (!cleanReason) return
     const payment = supplierPayments.find((item) => item.id === paymentId)
@@ -130,7 +130,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, reverseSupplierPayment }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
