@@ -108,12 +108,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const cleanReason = reason.trim()
     if (!cleanReason) return
     const payment = supplierPayments.find((item) => item.id === paymentId)
-    if (!payment || payment.status === 'Reversed') return
+    if (!payment || payment.status === 'Voided') return
     const cost = supplierCosts.find((item) => item.id === payment.supplierCostId)
     if (!cost || payment.amount > cost.paid) return
     const paid = Math.max(0, cost.paid - payment.amount)
     const status: SupplierCost['status'] = paid >= cost.amount ? 'Paid' : cost.dueDate < today() ? 'Overdue' : paid > 0 ? 'Partially Paid' : 'Unpaid'
-    setSupplierPayments((items) => items.map((item) => item.id === paymentId ? { ...item, status: 'Reversed', reversalReason: cleanReason } : item))
+    setSupplierPayments((items) => items.map((item) => item.id === paymentId ? { ...item, status: 'Voided', voidReason: cleanReason } : item))
     setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
   }
 
