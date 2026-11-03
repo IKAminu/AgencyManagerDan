@@ -17,6 +17,7 @@ type AppStore = {
   editing: { type: QuickActionType; id: string } | null
   setEditing: (value: { type: QuickActionType; id: string } | null) => void
   updateRecord: (type: QuickActionType, recordId: string, values: Record<string, string>) => void
+  convertLead: (leadId: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
@@ -55,10 +56,33 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setAction(null)
   }
 
+
+  const convertLead = (leadId: string) => {
+    const lead = leads.find((item) => item.id === leadId)
+    if (!lead) return
+    const existing = customers.find((customer) => customer.leadId === leadId)
+    if (!existing) {
+      const customer: Customer = {
+        id: id(),
+        reference: `CUS-${Math.random().toString(36).slice(2, 9).toUpperCase()}`,
+        name: lead.name,
+        phone: lead.phone,
+        email: lead.email,
+        nationality: 'Nigerian',
+        city: lead.city,
+        leadId,
+        createdAt: today(),
+      }
+      setCustomers((items) => [customer, ...items])
+    }
+    setLeads((items) => items.map((item) => item.id === leadId ? { ...item, status: 'Converted' } : item))
+  }
+
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
     if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => item.id === recordId ? { ...item, supplier: values.supplier, category: values.category, amount: Math.max(Number(values.amount), item.paid), dueDate: values.dueDate, status: item.paid >= Number(values.amount) ? 'Paid' : item.paid > 0 ? 'Partially Paid' : 'Unpaid' } : item))
     if (type === 'package') setPackages((items) => items.map((item) => item.id === recordId ? { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), availability: Number(values.availability || 0), status: values.status as TravelPackage['status'] } : item))
-    if (type === 'lead') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
+    if (type === 'lead' && values.status === 'Converted') convertLead(recordId)
+    if (type === 'lead' && values.status !== 'Converted') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
     if (type === 'customer') setCustomers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, nationality: values.nationality, city: values.city || undefined, historical: values.historical === 'true', notes: values.notes || undefined } : item))
     if (type === 'booking') setBookings((items) => items.map((item) => item.id === recordId ? { ...item, packageName: values.packageName, agreedPrice: Number(values.agreedPrice), departureDate: values.departureDate, returnDate: values.returnDate, status: values.status as Booking['status'] } : item))
     if (type === 'payment') setPayments((items) => items.map((item) => item.id === recordId ? { ...item, amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: values.status as Payment['status'], transactionReference: values.transactionReference || undefined } : item))
@@ -66,7 +90,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, setAction, addRecord, editing, setEditing, updateRecord }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, editing])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, editing, leads, customers])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
