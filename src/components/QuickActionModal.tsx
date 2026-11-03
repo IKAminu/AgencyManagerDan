@@ -19,6 +19,7 @@ const details: Record<QuickActionType, { title: string; description: string }> =
 export function QuickActionModal() {
   const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
+  const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
   if (!action) return null
 
   const current = editing?.type === action ? ({
@@ -33,7 +34,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError('') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package') }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : fallback
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -48,6 +49,7 @@ export function QuickActionModal() {
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
       if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
+      if (!selectedCustomer && values.bookingId) return setError('A new customer cannot be linked to an existing customer's booking. Create their booking separately first.')
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
     }
     if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
@@ -92,9 +94,8 @@ export function QuickActionModal() {
           <Field label="New customer's phone number" hint="Only needed when adding a new customer."><Input name="customerPhone" type="tel" placeholder="e.g. +234..." /></Field>
           <Field label="New customer's email (optional)"><Input name="customerEmail" type="email" /></Field>
           <Field label="New customer's nationality"><Input name="customerNationality" defaultValue="Nigerian" /></Field>
-          <Field label="What is this payment for?"><Select name="purposeType" defaultValue="package"><option value="package">Existing package</option><option value="custom">Custom service or item</option></Select></Field>
-          <Field label="Package"><Select name="packageId" defaultValue=""><option value="">Select a package</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field>
-          <Field label="Custom payment description"><Input name="customPurpose" placeholder="e.g. Visa processing, flight ticket, hotel" /></Field>
+          <Field label="What is this payment for?"><Select name="purposeType" value={paymentPurposeType} onChange={(event) => setPaymentPurposeType(event.target.value as 'package' | 'custom')}><option value="package">Existing package</option><option value="custom">Custom service or item</option></Select></Field>
+          {paymentPurposeType === 'package' ? <Field label="Package"><Select name="packageId" defaultValue=""><option value="">Select a package</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field> : <Field label="Custom payment description"><Input name="customPurpose" placeholder="e.g. Visa processing, flight ticket, hotel" required /></Field>}
           <Field label="Related booking (optional)" hint="Only select a booking belonging to the customer above."><Select name="bookingId" defaultValue=""><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
         </>}
         {isEditing && <Field label="Customer"><Input value={customers.find((customer) => customer.id === current?.customerId)?.name || 'Customer unavailable'} readOnly /></Field>}
