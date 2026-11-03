@@ -20,6 +20,7 @@ type AppStore = {
   updateRecord: (type: QuickActionType, recordId: string, values: Record<string, string>) => void
   convertLead: (leadId: string, values?: Record<string, string>) => void
   reversePayment: (paymentId: string, reason: string) => void
+  reverseSupplierPayment: (paymentId: string, reason: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
@@ -50,6 +51,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const payment: SupplierPayment = { id: id(), supplierCostId: values.supplierCostId, amount, date: values.date, method: values.method as SupplierPayment['method'], reference: values.reference || undefined }
       const paid = cost.paid + amount
       const status: SupplierCost['status'] = paid >= cost.amount ? 'Paid' : cost.dueDate < today() ? 'Overdue' : paid > 0 ? 'Partially Paid' : 'Unpaid'
+      payment.status = 'Confirmed'
       setSupplierPayments((items) => [payment, ...items])
       setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
     }
@@ -100,6 +102,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const reversePayment = (paymentId: string, reason: string) => {
     if (!reason.trim()) return
     setPayments((items) => items.map((payment) => payment.id === paymentId && payment.status === 'Confirmed' ? { ...payment, status: 'Reversed', reversalReason: reason.trim() } : payment))
+  }
+
+  const reverseSupplierPayment = (paymentId: string, reason: string) => {
+    const cleanReason = reason.trim()
+    if (!cleanReason) return
+    const payment = supplierPayments.find((item) => item.id === paymentId)
+    if (!payment || payment.status === 'Reversed') return
+    const cost = supplierCosts.find((item) => item.id === payment.supplierCostId)
+    if (!cost || payment.amount > cost.paid) return
+    const paid = Math.max(0, cost.paid - payment.amount)
+    const status: SupplierCost['status'] = paid >= cost.amount ? 'Paid' : cost.dueDate < today() ? 'Overdue' : paid > 0 ? 'Partially Paid' : 'Unpaid'
+    setSupplierPayments((items) => items.map((item) => item.id === paymentId ? { ...item, status: 'Reversed', reversalReason: cleanReason } : item))
+    setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
   }
 
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
