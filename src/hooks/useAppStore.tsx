@@ -32,6 +32,7 @@ const confirmedSupplierPaid = (costId: string, payments: SupplierPayment[]) =>
   payments.filter((payment) => payment.supplierCostId === costId && (payment.status || 'Confirmed') === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)
 const packageAvailabilityStatus = (status: TravelPackage['status'], availability: number): TravelPackage['status'] =>
   availability <= 0 && status === 'Active' ? 'Fully Booked' : availability > 0 && status === 'Fully Booked' ? 'Active' : status
+const bookingReservesPlaces = (status: Booking['status']) => !['Enquiry', 'Cancelled'].includes(status)
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState(initialLeads)
@@ -67,7 +68,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const selectedPackage = packages.find((item) => item.id === values.packageId)
       const partySize = Number(values.partySize || 1)
       const status = (values.status || 'Pending Confirmation') as Booking['status']
-      if (selectedPackage && status !== 'Cancelled') {
+      if (selectedPackage && bookingReservesPlaces(status)) {
         if (selectedPackage.status !== 'Active' || selectedPackage.availability < partySize) return
         const availability = selectedPackage.availability - partySize
         setPackages((items) => items.map((item) => item.id === selectedPackage.id ? { ...item, availability, status: packageAvailabilityStatus(item.status, availability) } : item))
@@ -144,8 +145,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       if (existing) {
         const nextPartySize = Number(values.partySize || existing.partySize || 1)
         const nextStatus = values.status as Booking['status']
-        const wasReserved = existing.status !== 'Cancelled' ? (existing.partySize || 1) : 0
-        const willBeReserved = nextStatus !== 'Cancelled' ? nextPartySize : 0
+        const wasReserved = bookingReservesPlaces(existing.status) ? (existing.partySize || 1) : 0
+        const willBeReserved = bookingReservesPlaces(nextStatus) ? nextPartySize : 0
         const delta = willBeReserved - wasReserved
         const linkedPackage = existing.packageId ? packages.find((item) => item.id === existing.packageId) : undefined
         if (linkedPackage && delta > 0 && (linkedPackage.status !== 'Active' || linkedPackage.availability < delta)) return
