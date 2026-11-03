@@ -41,6 +41,8 @@ export function QuickActionModal() {
     event.preventDefault()
     const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>
     if (!values.name && (action === 'lead' || action === 'customer' || action === 'traveller')) return setError('Please enter a full name.')
+    if (action === 'traveller' && !isEditing && !values.bookingId) return setError('Select the booking this traveller belongs to.')
+    if (action === 'traveller' && values.customerId && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer profile.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
@@ -145,7 +147,9 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
       </>}
       {action === 'traveller' && <>
-        {!isEditing && <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>}
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required defaultValue=""><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
+        <Field label="Link to customer profile (optional)" hint="Choose an existing customer if this traveller already has a customer record. Dependants can remain traveller-only records."><Select name="customerId" defaultValue={value('customerId')}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
+        <Field label="Traveller's full name"><Input name="name" defaultValue={value('name')} required /></Field>
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
         <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
         <Field label="Travel status"><Select name="status" defaultValue={value('status', 'Not Started')}><option>Not Started</option><option>Documents Pending</option><option>Documents Complete</option><option>Ready for Travel</option><option>Departed</option><option>Abroad</option><option>Returned</option></Select></Field>
