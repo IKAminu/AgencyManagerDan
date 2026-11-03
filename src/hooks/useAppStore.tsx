@@ -6,6 +6,7 @@ import { initialBookings, initialCustomers, initialLeads, initialPackages, initi
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
 type AppStore = {
+  mode: AppMode
   leads: Lead[]
   customers: Customer[]
   bookings: Booking[]
@@ -191,7 +192,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
+  const value = useMemo(() => ({ mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
   return <StoreContext.Provider value={value}>{!isDemo && dataError && <div role="alert" className="data-connection-error">Live database error: {dataError}</div>}{!isDemo && !dataReady && <div className="data-connection-loading" role="status">Loading agency records…</div>}{children}</StoreContext.Provider>
 }
 
