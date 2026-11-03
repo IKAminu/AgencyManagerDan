@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LogOut, Menu, Package, Plus, Search, Settings, Users, WalletCards, X } from 'lucide-react'
+import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, Users, WalletCards, X } from 'lucide-react'
 import { appConfig } from '@/config/app'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
@@ -20,14 +20,52 @@ export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [accountEmail, setAccountEmail] = useState('')
+  const [accountName, setAccountName] = useState('')
+  const notificationRef = useRef<HTMLDivElement>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const { leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
+
+  useEffect(() => {
+    let active = true
+    supabase?.auth.getUser().then(({ data }) => {
+      if (!active || !data.user) return
+      const user = data.user
+      const email = user.email || ''
+      const metadataName = user.user_metadata?.full_name || user.user_metadata?.name || ''
+      const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase())
+      setAccountEmail(email)
+      setAccountName(metadataName || fallbackName || 'Dandurgu user')
+    })
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!notificationRef.current?.contains(target)) setNotificationsOpen(false)
+      if (!accountRef.current?.contains(target)) setAccountOpen(false)
+    }
+    const closeOnScroll = () => {
+      setNotificationsOpen(false)
+      setAccountOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('scroll', closeOnScroll, true)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('scroll', closeOnScroll, true)
+    }
+  }, [])
   useEffect(() => {
     const closeOverlays = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSearchOpen(false)
         setNotificationsOpen(false)
+        setAccountOpen(false)
         setMenuOpen(false)
       }
     }
@@ -73,9 +111,20 @@ export function AppLayout() {
           {searchOpen && query && <div className="search-results">{results.length ? results.map((result, index) => <button key={`${result.meta}-${index}`} onClick={() => { navigate(result.path); setQuery(''); setSearchOpen(false) }}><strong>{result.label}</strong><span>{result.meta}</span></button>) : <p>No matching records</p>}</div>}
         </div>
         <div className="top-actions">
-          <div className="popover-wrap"><IconButton label={alerts.length ? `View ${alerts.length} notifications` : 'No current notifications'} onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={19} />{alerts.length > 0 && <span className="notification-dot" />}</IconButton>{notificationsOpen && <div className="notifications"><div><strong>Current alerts</strong><span>{alerts.length} items · Based on current records</span></div>{alerts.length ? alerts.map((alert, index) => <button key={`${alert.path}-${index}`} onClick={() => { navigate(alert.path); setNotificationsOpen(false) }}><strong>{alert.title}</strong><span>{alert.detail}</span></button>) : <p className="notification-empty">Nothing needs attention right now.</p>}</div>}</div>
+          <div className="popover-wrap" ref={notificationRef}><IconButton label={alerts.length ? `View ${alerts.length} notifications` : 'No current notifications'} aria-expanded={notificationsOpen} onClick={() => { setNotificationsOpen((open) => !open); setAccountOpen(false) }}><Bell size={19} />{alerts.length > 0 && <span className="notification-dot" />}</IconButton>{notificationsOpen && <div className="notifications"><div><strong>Current alerts</strong><span>{alerts.length} items · Based on current records</span></div>{alerts.length ? alerts.map((alert, index) => <button key={`${alert.path}-${index}`} onClick={() => { navigate(alert.path); setNotificationsOpen(false) }}><strong>{alert.title}</strong><span>{alert.detail}</span></button>) : <p className="notification-empty">Nothing needs attention right now.</p>}</div>}</div>
           <Button className="quick-button" onClick={() => setAction('lead')}><Plus size={17} /> Quick action <ChevronDown size={15} /></Button>
-          <IconButton label="Sign out" title="Sign out" onClick={() => { void supabase?.auth.signOut() }}><LogOut size={18} /></IconButton>
+          <div className="account-wrap" ref={accountRef}>
+            <button className="account-trigger" type="button" aria-label="Open account centre" aria-expanded={accountOpen} onClick={() => { setAccountOpen((open) => !open); setNotificationsOpen(false) }}>
+              {(accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('') || accountEmail.slice(0, 2) || 'DU').toUpperCase()}
+            </button>
+            {accountOpen && <section className="account-popover" aria-label="Account centre">
+              <div className="account-identity"><div className="account-avatar">{(accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('') || 'DU').toUpperCase()}</div><div><strong>{accountName || 'Dandurgu user'}</strong><span>{accountEmail}</span></div></div>
+              <div className="account-detail"><span>Workspace</span><strong>Dandurgu Headquarters</strong></div>
+              <div className="account-detail"><span>Access</span><strong>Authorised account</strong></div>
+              <div className="account-security"><ShieldCheck size={16} /><div><strong>Two-step verification</strong><span>Authenticator app enabled</span></div></div>
+              <button className="account-logout" type="button" onClick={() => { setAccountOpen(false); void supabase?.auth.signOut() }}><LogOut size={16} /> Sign out</button>
+            </section>}
+          </div>
         </div>
       </header>
       <main><Outlet /></main>
