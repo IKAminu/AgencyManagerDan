@@ -167,7 +167,7 @@ export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode 
       if (!alive) return
       if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
         if (current) await supabase!.auth.signOut()
-        if (alive) { setSession(null); setAuthenticated(false); setMode(null); setReady(true) }
+        if (alive) { setSession(null); setAuthenticated(false); setMode((current) => current === 'demo' ? 'demo' : null); setReady(true) }
         return
       }
       const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
@@ -186,7 +186,8 @@ export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode 
   }, [])
 
   if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
-  if (!ready) return <div className="auth-loading">Loading secure session…</div>
-  if (!session || !authenticated) return <AuthScreen onDemo={() => { void supabase?.auth.signOut().then(({ error }) => { if (!error) setMode('demo') }) }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live') }} />
-  return <>{mode === 'live' ? children('live') : mode === 'demo' ? children('demo') : null}</>
+  if (!ready) return <div className="auth-loading"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span>Preparing secure workspace</span><i /></div>
+  if (mode === 'demo') return <>{children('demo')}</>
+  if (!session || !authenticated) return <AuthScreen onDemo={async () => { const { error } = await supabase!.auth.signOut(); if (error) throw error; setSession(null); setAuthenticated(false); setMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live') }} />
+  return <>{mode === 'live' ? children('live') : null}</>
 }
