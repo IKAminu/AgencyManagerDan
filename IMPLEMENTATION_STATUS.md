@@ -20,6 +20,8 @@
 - Dashboard follow-up alerts now exclude converted, lost and not-interested leads; dashboard lists show clear empty states instead of blank sections.
 - Header notifications are generated from current follow-ups, upcoming departures and overdue supplier costs rather than hardcoded demo messages; alerts navigate to the relevant module and can be dismissed with Escape.
 - Mobile usability refinements improve table horizontal scrolling, touch target sizes, modal sizing and sticky form actions. These are responsive CSS changes and have not yet been manually tested on a physical phone.
+- Operational date calculations and newly created record dates now use the Africa/Lagos calendar date, avoiding UTC date shifts around midnight.
+- Payment and supplier-cost forms validate date values before saving; upcoming-departure dashboard counts exclude cancelled and completed bookings.
 - New bookings can only select active packages with available places; package price, estimated cost and availability values are validated, and booking dates must be valid and ordered.
 - Document links must use valid HTTPS URLs, and the related record reference is required. Links remain references only; files are not uploaded or permission-checked by the app.
 - Customer payment history labels payment corrections as reversals, while supplier disbursement corrections are labelled as voided records.
