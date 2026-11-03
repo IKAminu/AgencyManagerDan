@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, Menu, Package, Plus, Search, Settings, Users, WalletCards, X } from 'lucide-react'
 import { appConfig } from '@/config/app'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
 import { QuickActionModal } from '@/components/QuickActionModal'
+import { daysFromToday, supplierOutstanding } from '@/lib/business'
 
 const groups = [
   { label: 'Overview', links: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }] },
@@ -20,7 +21,30 @@ export function AppLayout() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
-  const { leads, customers, bookings, travellers, setAction } = useAppStore()
+  const { leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
+  useEffect(() => {
+    const closeOverlays = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchOpen(false)
+        setNotificationsOpen(false)
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', closeOverlays)
+    return () => window.removeEventListener('keydown', closeOverlays)
+  }, [])
+
+  const alerts = useMemo(() => {
+    const followUps = leads.filter((item) => item.followUp && daysFromToday(item.followUp) <= 1 && !['Converted', 'Lost', 'Not Interested'].includes(item.status))
+    const departures = bookings.filter((item) => daysFromToday(item.departureDate) >= 0 && daysFromToday(item.departureDate) <= 7 && !['Cancelled', 'Completed'].includes(item.status))
+    const overdueCosts = supplierCosts.filter((item) => supplierOutstanding(item) > 0 && (item.status === 'Overdue' || daysFromToday(item.dueDate) < 0))
+    return [
+      ...followUps.map((item) => ({ title: item.name, detail: `${daysFromToday(item.followUp!) < 0 ? 'Overdue' : 'Due today'} · Lead follow-up`, path: '/leads' })),
+      ...departures.map((item) => ({ title: item.reference, detail: `Departure ${item.departureDate} · Review travel readiness`, path: '/bookings' })),
+      ...overdueCosts.map((item) => ({ title: item.supplier, detail: `Overdue supplier balance · ${item.category}`, path: '/suppliers' })),
+    ].slice(0, 8)
+  }, [leads, bookings, supplierCosts])
+
   const results = useMemo(() => {
     if (query.length < 2) return []
     const q = query.toLowerCase()
@@ -48,7 +72,7 @@ export function AppLayout() {
           {searchOpen && query && <div className="search-results">{results.length ? results.map((result, index) => <button key={`${result.meta}-${index}`} onClick={() => { navigate(result.path); setQuery(''); setSearchOpen(false) }}><strong>{result.label}</strong><span>{result.meta}</span></button>) : <p>No matching records</p>}</div>}
         </div>
         <div className="top-actions">
-          <div className="popover-wrap"><IconButton label="View notifications" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={19} /><span className="notification-dot" /></IconButton>{notificationsOpen && <div className="notifications"><div><strong>Notifications</strong><span>Derived from demo records</span></div><button onClick={() => navigate('/leads')}><strong>2 follow-ups need attention</strong><span>One is overdue and one is due today.</span></button><button onClick={() => navigate('/bookings')}><strong>2 departures within 7 days</strong><span>Review documents and supplier confirmations.</span></button><button onClick={() => navigate('/suppliers')}><strong>Supplier payment overdue</strong><span>Rahma Ground Handling has an unpaid cost.</span></button></div>}</div>
+          <div className="popover-wrap"><IconButton label={alerts.length ? `View ${alerts.length} notifications` : 'No current notifications'} onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={19} />{alerts.length > 0 && <span className="notification-dot" />}</IconButton>{notificationsOpen && <div className="notifications"><div><strong>Current alerts</strong><span>{alerts.length} items · Based on current records</span></div>{alerts.length ? alerts.map((alert, index) => <button key={`${alert.path}-${index}`} onClick={() => { navigate(alert.path); setNotificationsOpen(false) }}><strong>{alert.title}</strong><span>{alert.detail}</span></button>) : <p className="notification-empty">Nothing needs attention right now.</p>}</div>}</div>
           <Button className="quick-button" onClick={() => setAction('lead')}><Plus size={17} /> Quick action <ChevronDown size={15} /></Button>
           <div className="user-avatar" title="Demo operator">AO</div>
         </div>
