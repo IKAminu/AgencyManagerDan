@@ -71,7 +71,7 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
     }
   }
 
-  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVerify = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
     setBusy(true)
@@ -155,7 +155,7 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
   </div>
 }
 
-export function AuthGate({ children, onMode }: { children: (mode: AppMode) => ReactNode; onMode: (mode: AppMode) => void }) {
+export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
@@ -167,7 +167,7 @@ export function AuthGate({ children, onMode }: { children: (mode: AppMode) => Re
       if (!alive) return
       if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
         if (current) await supabase!.auth.signOut()
-        if (alive) { setSession(null); setAuthenticated(false); setReady(true) }
+        if (alive) { setSession(null); setAuthenticated(false); setMode(null); setReady(true) }
         return
       }
       const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
@@ -187,6 +187,6 @@ export function AuthGate({ children, onMode }: { children: (mode: AppMode) => Re
 
   if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
   if (!ready) return <div className="auth-loading">Loading secure session…</div>
-  if (!session || !authenticated) return <AuthScreen onDemo={() => { void supabase?.auth.signOut(); setMode('demo'); onMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live'); onMode('live') }} />
+  if (!session || !authenticated) return <AuthScreen onDemo={() => { void supabase?.auth.signOut(); setMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live') }} />
   return <>{mode === 'live' ? children('live') : mode === 'demo' ? children('demo') : null}</>
 }
