@@ -51,8 +51,10 @@ export function QuickActionModal() {
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
       if (!selectedCustomer && values.bookingId) return setError('A new customer cannot be linked to an existing customer's booking. Create their booking separately first.')
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
+      if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
     }
     if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
+    if (action === 'supplier-cost' && isEditing && Number(values.amount) < (supplierCosts.find((cost) => cost.id === editing?.id)?.paid ?? 0)) return setError('Supplier cost cannot be reduced below the amount already paid.')
     if (action === 'supplier-payment' && Number(values.amount) <= 0) return setError('Payment amount must be greater than zero.')
     if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
     if (action === 'package' && Number(values.price) <= 0) return setError('Package selling price must be greater than zero.')
@@ -99,7 +101,7 @@ export function QuickActionModal() {
           <Field label="Related booking (optional)" hint="Only select a booking belonging to the customer above."><Select name="bookingId" defaultValue=""><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
         </>}
         {isEditing && <Field label="Customer"><Input value={(current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name : undefined) || 'Customer unavailable'} readOnly /></Field>}
-        <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} required /></Field>
+        <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && current?.status !== 'Pending'} required /></Field>
         <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         {!isEditing && <Field label="Status"><Select name="status" defaultValue="Confirmed"><option>Pending</option><option>Confirmed</option></Select></Field>}
