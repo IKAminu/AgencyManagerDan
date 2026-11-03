@@ -174,6 +174,7 @@ export function AuthGate({ children, onMode }: { children: (mode: AppMode) => Re
       if (alive) {
         setSession(current)
         setAuthenticated(!error && data.currentLevel === 'aal2')
+        setMode(!error && data.currentLevel === 'aal2' ? 'live' : null)
         setReady(true)
       }
     }
