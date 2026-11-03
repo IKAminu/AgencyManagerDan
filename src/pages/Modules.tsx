@@ -5,8 +5,28 @@ import { useAppStore } from '@/hooks/useAppStore'
 import { bookingBalance, confirmedPaid, money, shortDate, supplierOutstanding, travellerCount } from '@/lib/business'
 import type { QuickActionType } from '@/types'
 
+function exportVisibleTable() {
+  const table = document.querySelector('.page table')
+  if (!table) return
+  const csv = Array.from(table.querySelectorAll('tr')).map((row) =>
+    Array.from(row.querySelectorAll('th, td')).map((cell) => {
+      const value = (cell.textContent || '').replace(/\\s+/g, ' ').trim()
+      return '"' + value.replace(/"/g, '""') + '"'
+    }).join(',')
+  ).join('\\r\\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'dandurgu-records.csv'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 function Toolbar({ query, setQuery, filter, setFilter, options }: { query: string; setQuery: (value: string) => void; filter: string; setFilter: (value: string) => void; options: string[] }) {
-  return <div className="toolbar"><div className="table-search"><Search size={17} /><Input aria-label="Search records" placeholder="Search records…" value={query} onChange={(event) => setQuery(event.target.value)} /></div><div className="filter-select"><Filter size={16} /><Select aria-label="Filter records" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">All statuses</option>{options.map((option) => <option key={option}>{option}</option>)}</Select></div><Button variant="secondary"><Download size={16} /> Export</Button></div>
+  return <div className="toolbar"><div className="table-search"><Search size={17} /><Input aria-label="Search records" placeholder="Search records…" value={query} onChange={(event) => setQuery(event.target.value)} /></div><div className="filter-select"><Filter size={16} /><Select aria-label="Filter records" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">All statuses</option>{options.map((option) => <option key={option}>{option}</option>)}</Select></div><Button variant="secondary" onClick={exportVisibleTable}><Download size={16} /> Export CSV</Button></div>
 }
 
 function Module({ title, description, actionLabel, actionType, children, options = [], query, setQuery, filter, setFilter }: { title: string; description: string; actionLabel: string; actionType?: QuickActionType; children: React.ReactNode; options?: string[]; query: string; setQuery: (v: string) => void; filter: string; setFilter: (v: string) => void }) {
@@ -30,7 +50,7 @@ export function LeadsPage() {
 export function CustomersPage() {
   const controls = useFilter()
   const { customers, bookings, payments, setAction, setEditing } = useAppStore()
-  const rows = customers.filter((item) => `${item.reference} ${item.name} ${item.phone} ${item.email}`.toLowerCase().includes(controls.query.toLowerCase()))
+  const rows = customers.filter((item) => (!controls.filter || (controls.filter === 'Historical' ? item.historical : !item.historical)) && `${item.reference} ${item.name} ${item.phone} ${item.email}`.toLowerCase().includes(controls.query.toLowerCase()))
   return <Module title="Customer records" description="Permanent customer profiles and their complete relationship with Dandurgu." actionLabel="Add customer" actionType="customer" options={['Current', 'Historical']} {...controls}><TableShell><table><thead><tr><th>Customer</th><th>Contact</th><th>Nationality</th><th>Type</th><th>Bookings</th><th>Total paid</th><th>Outstanding</th><th>Actions</th></tr></thead><tbody>{rows.map((customer) => {
     const customerBookings = bookings.filter((item) => item.customerId === customer.id)
     return <tr key={customer.id}><td><strong>{customer.name}</strong><span className="cell-sub">{customer.reference}</span></td><td>{customer.phone}<span className="cell-sub">{customer.email || 'No email recorded'}</span></td><td>{customer.nationality}</td><td>{customer.historical ? <Badge>Historical</Badge> : 'Current'}</td><td>{customerBookings.length}</td><td>{money(payments.filter((item) => item.customerId === customer.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0))}</td><td><strong>{money(customerBookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0))}</strong></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'customer', id: customer.id }); setAction('customer') }}><Pencil size={14} /> Edit</Button></td></tr>
