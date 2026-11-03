@@ -53,6 +53,7 @@ export interface Booking {
   packageId?: string
   packageName: string
   agreedPrice: number
+  partySize: number
   currency: 'NGN'
   bookingDate: string
   departureDate: string
