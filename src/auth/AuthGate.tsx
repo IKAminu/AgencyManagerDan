@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { waitForMinimumLoadingTime } from '@/lib/loading'
 
 const ALLOWED_EMAILS = new Set([
   'ikaminumail@gmail.com',
@@ -167,10 +168,12 @@ export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode 
       if (!alive) return
       if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
         if (current) await supabase!.auth.signOut()
+        await waitForMinimumLoadingTime()
         if (alive) { setSession(null); setAuthenticated(false); setMode((current) => current === 'demo' ? 'demo' : null); setReady(true) }
         return
       }
       const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
+      await waitForMinimumLoadingTime()
       if (alive) {
         setSession(current)
         setAuthenticated(!error && data.currentLevel === 'aal2')
