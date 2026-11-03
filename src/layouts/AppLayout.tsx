@@ -33,6 +33,7 @@ export function AppLayout() {
   const notificationRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
   const quickActionsRef = useRef<HTMLDivElement>(null)
+  const mobileQuickActionsRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const { mode, saveNotice, leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
@@ -58,7 +59,7 @@ export function AppLayout() {
       const target = event.target as Node
       if (!notificationRef.current?.contains(target)) setNotificationsOpen(false)
       if (!accountRef.current?.contains(target)) setAccountOpen(false)
-      if (!quickActionsRef.current?.contains(target)) setQuickActionsOpen(false)
+      if (!quickActionsRef.current?.contains(target) && !mobileQuickActionsRef.current?.contains(target)) setQuickActionsOpen(false)
     }
     const closeOnScroll = () => {
       setNotificationsOpen(false)
@@ -143,7 +144,7 @@ export function AppLayout() {
       </header>
       <main><Outlet /></main>
     </div>
-    <div className={`mobile-quick-actions ${quickActionsOpen ? 'is-open' : ''}`} ref={quickActionsRef}><div className="mobile-quick-menu" aria-hidden={!quickActionsOpen}>{primaryQuickActions.map(({ type, label, icon: Icon }, index) => <button className={`mobile-quick-option mobile-quick-option-${index + 1}`} key={type} type="button" tabIndex={quickActionsOpen ? 0 : -1} onClick={() => { setAction(type); setQuickActionsOpen(false) }}><Icon size={17} /><span>{label}</span></button>)}</div><button className="mobile-fab" aria-label={quickActionsOpen ? "Close quick actions" : "Open quick actions"} aria-expanded={quickActionsOpen} onClick={() => setQuickActionsOpen((open) => !open)}><Plus size={22} /></button></div>
+    <div className={`mobile-quick-actions ${quickActionsOpen ? 'is-open' : ''}`} ref={mobileQuickActionsRef}><div className="mobile-quick-menu" aria-hidden={!quickActionsOpen}>{primaryQuickActions.map(({ type, label, icon: Icon }, index) => <button className={`mobile-quick-option mobile-quick-option-${index + 1}`} key={type} type="button" tabIndex={quickActionsOpen ? 0 : -1} onClick={() => { setAction(type); setQuickActionsOpen(false) }}><Icon size={17} /><span>{label}</span></button>)}</div><button className="mobile-fab" aria-label={quickActionsOpen ? "Close quick actions" : "Open quick actions"} aria-expanded={quickActionsOpen} onClick={() => setQuickActionsOpen((open) => !open)}><Plus size={22} /></button></div>
     <QuickActionModal />
   </div>
 }
