@@ -44,20 +44,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (type === 'document') setDocuments((items) => [{ id: id(), name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, recordedAt: today(), status: values.status as DocumentRecord['status'] }, ...items])
     if (type === 'supplier-cost') setSupplierCosts((items) => [{ id: id(), bookingId: values.bookingId, supplier: values.supplier, category: values.category, amount: Number(values.amount), dueDate: values.dueDate, paid: 0, status: 'Unpaid' }, ...items])
     if (type === 'supplier-payment') {
-      const payment: SupplierPayment = { id: id(), supplierCostId: values.supplierCostId, amount: Number(values.amount), date: values.date, method: values.method as SupplierPayment['method'], reference: values.reference || undefined }
+      const cost = supplierCosts.find((item) => item.id === values.supplierCostId)
+      const amount = Number(values.amount)
+      if (!cost || !Number.isFinite(amount) || amount <= 0 || amount > cost.amount - cost.paid) return
+      const payment: SupplierPayment = { id: id(), supplierCostId: values.supplierCostId, amount, date: values.date, method: values.method as SupplierPayment['method'], reference: values.reference || undefined }
+      const paid = cost.paid + amount
+      const status: SupplierCost['status'] = paid >= cost.amount ? 'Paid' : cost.dueDate < today() ? 'Overdue' : paid > 0 ? 'Partially Paid' : 'Unpaid'
       setSupplierPayments((items) => [payment, ...items])
-      setSupplierCosts((items) => items.map((cost) => {
-        if (cost.id !== values.supplierCostId) return cost
-        const paid = cost.paid + payment.amount
-        return { ...cost, paid, status: paid >= cost.amount ? 'Paid' : paid > 0 ? 'Partially Paid' : 'Unpaid' }
-      }))
+      setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
     }
     if (type === 'package') setPackages((items) => [{ id: id(), code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), currency: 'NGN', availability: Number(values.availability || 0), status: (values.status || 'Draft') as TravelPackage['status'] }, ...items])
     if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: reference('CUS'), name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') setBookings((items) => [{ id: id(), reference: `BKG-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status: (values.status || 'Pending Confirmation') as Booking['status'] }, ...items])
     if (type === 'payment') {
-      let customer = customers.find((item) => item.reference === values.customerName?.split(' — ').at(-1))
+      const enteredCustomerName = values.customerName?.split(' — ')[0].trim().toLocaleLowerCase()
+      const matchingCustomers = customers.filter((item) => item.name.trim().toLocaleLowerCase() === enteredCustomerName)
+      let customer = customers.find((item) => item.reference === values.customerName?.split(' — ').at(-1)) || (matchingCustomers.length === 1 ? matchingCustomers[0] : undefined)
       if (!customer && values.customerName?.trim()) {
         customer = { id: id(), reference: reference('CUS'), name: values.customerName.trim(), phone: values.customerPhone.trim(), email: values.customerEmail.trim() || undefined, nationality: values.customerNationality || 'Nigerian', createdAt: today() }
         setCustomers((items) => [customer!, ...items])
