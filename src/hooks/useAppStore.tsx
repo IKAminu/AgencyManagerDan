@@ -42,7 +42,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const addRecord = (type: QuickActionType, values: Record<string, string>) => {
     if (type === 'document') setDocuments((items) => [{ id: id(), name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, recordedAt: today(), status: values.status as DocumentRecord['status'] }, ...items])
-    if (type === 'supplier-cost') setSupplierCosts((items) => [{ id: id(), bookingId: values.bookingId, supplier: values.supplier, category: values.category, amount: Number(values.amount), dueDate: values.dueDate, paid: 0, status: 'Unpaid' }, ...items])
+    if (type === 'supplier-cost') setSupplierCosts((items) => [{ id: id(), bookingId: values.bookingId, supplier: values.supplier, category: values.category, amount: Number(values.amount), dueDate: values.dueDate, paid: 0, status: values.dueDate < today() ? 'Overdue' : 'Unpaid' }, ...items])
     if (type === 'supplier-payment') {
       const cost = supplierCosts.find((item) => item.id === values.supplierCostId)
       const amount = Number(values.amount)
@@ -104,7 +104,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
     if (type === 'document') setDocuments((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, status: values.status as DocumentRecord['status'] } : item))
-    if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => item.id === recordId ? { ...item, supplier: values.supplier, category: values.category, amount: Math.max(Number(values.amount), item.paid), dueDate: values.dueDate, status: item.paid >= Number(values.amount) ? 'Paid' : item.paid > 0 ? 'Partially Paid' : 'Unpaid' } : item))
+    if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => { if (item.id !== recordId) return item; const amount = Math.max(Number(values.amount), item.paid); const status: SupplierCost['status'] = item.paid >= amount ? 'Paid' : values.dueDate < today() ? 'Overdue' : item.paid > 0 ? 'Partially Paid' : 'Unpaid'; return { ...item, supplier: values.supplier, category: values.category, amount, dueDate: values.dueDate, status } }))
     if (type === 'package') setPackages((items) => items.map((item) => item.id === recordId ? { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), availability: Number(values.availability || 0), status: values.status as TravelPackage['status'] } : item))
     if (type === 'lead' && values.status === 'Converted') convertLead(recordId, values)
     if (type === 'lead' && values.status !== 'Converted') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
