@@ -36,9 +36,10 @@ export function AppLayout() {
       const user = data.user
       const email = user.email || ''
       const metadataName = user.user_metadata?.full_name || user.user_metadata?.name || ''
+      const knownNames: Record<string, string> = { 'ikaminumail@gmail.com': 'IK Aminu', 'dandurguairtravels@gmail.com': 'Dandurgu Air Travel & Tours' }
       const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase())
       setAccountEmail(email)
-      setAccountName(metadataName || fallbackName || 'Dandurgu user')
+      setAccountName(metadataName || knownNames[email.toLowerCase()] || fallbackName || 'Dandurgu user')
     })
     return () => { active = false }
   }, [])
