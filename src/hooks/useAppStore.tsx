@@ -70,7 +70,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setPayments((items) => [{ id: id(), reference: reference('PAY'), bookingId: selectedBooking?.id, customerId: customer!.id, packageId: values.purposeType === 'package' ? values.packageId || undefined : undefined, purpose: values.purposeType === 'package' ? (packages.find((item) => item.id === values.packageId)?.name || 'Package payment') : values.customPurpose.trim(), amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: (values.status || 'Confirmed') as Payment['status'], transactionReference: values.transactionReference || undefined }, ...items])
       }
     }
-    if (type === 'traveller') setTravellers((items) => [{ id: id(), name: values.name, bookingId: values.bookingId, nationality: values.nationality || 'Nigerian', status: (values.status || 'Not Started') as Traveller['status'], group: values.group || undefined, documentsComplete: ['Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(values.status) }, ...items])
+    if (type === 'traveller') { const linkedCustomer = customers.find((customer) => customer.id === values.customerId); setTravellers((items) => [{ id: id(), name: linkedCustomer?.name || values.name, customerId: linkedCustomer?.id, bookingId: values.bookingId, nationality: values.nationality || linkedCustomer?.nationality || 'Nigerian', status: (values.status || 'Not Started') as Traveller['status'], group: values.group || undefined, documentsComplete: ['Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(values.status) }, ...items]) }
     setAction(null)
   }
 
@@ -83,7 +83,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (!existing) {
       const customer: Customer = {
         id: id(),
-        reference: `CUS-${Math.random().toString(36).slice(2, 9).toUpperCase()}`,
+        reference: reference('CUS'),
         name: lead.name,
         phone: lead.phone,
         email: lead.email,
@@ -111,7 +111,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (type === 'customer') setCustomers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, nationality: values.nationality, city: values.city || undefined, historical: values.historical === 'true', notes: values.notes || undefined } : item))
     if (type === 'booking') setBookings((items) => items.map((item) => item.id === recordId ? { ...item, packageName: values.packageName, agreedPrice: Number(values.agreedPrice), departureDate: values.departureDate, returnDate: values.returnDate, status: values.status as Booking['status'] } : item))
     if (type === 'payment') setPayments((items) => items.map((item) => item.id === recordId ? { ...item, amount: item.status === 'Pending' ? Number(values.amount) : item.amount, date: values.date, method: values.method as Payment['method'], status: item.status === 'Pending' ? (values.status as Payment['status']) : item.status, transactionReference: values.transactionReference || undefined } : item))
-    if (type === 'traveller') setTravellers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, nationality: values.nationality, group: values.group || undefined, status: values.status as Traveller['status'], documentsComplete: values.status === 'Documents Complete' || values.status === 'Ready for Travel' || values.status === 'Departed' || values.status === 'Abroad' || values.status === 'Returned' } : item))
+    if (type === 'traveller') setTravellers((items) => items.map((item) => { if (item.id !== recordId) return item; const linkedCustomer = customers.find((customer) => customer.id === values.customerId); return { ...item, name: linkedCustomer?.name || values.name, customerId: linkedCustomer?.id, nationality: values.nationality || linkedCustomer?.nationality || item.nationality, group: values.group || undefined, status: values.status as Traveller['status'], documentsComplete: ['Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(values.status) } }))
     setEditing(null)
   }
 
