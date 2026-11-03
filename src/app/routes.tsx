@@ -21,5 +21,5 @@ export const router = createBrowserRouter([
     ],
   },
 ], {
-  basename: '/AgencyManagerDan/',
+  basename: import.meta.env.BASE_URL,
 })
