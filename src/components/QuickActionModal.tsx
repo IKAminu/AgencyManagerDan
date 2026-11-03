@@ -45,9 +45,10 @@ export function QuickActionModal() {
     if (action === 'traveller' && values.customerId && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer profile.')
     if (action === 'booking' && (!values.departureDate || !values.returnDate || !Number.isFinite(Date.parse(values.departureDate)) || !Number.isFinite(Date.parse(values.returnDate)))) return setError('Enter valid departure and return dates.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
-    if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
+    if (action === 'booking' && (!Number.isFinite(Number(values.agreedPrice)) || Number(values.agreedPrice) <= 0)) return setError('Agreed price must be a valid number greater than zero.')
+    if (action === 'lead' && values.followUp && !Number.isFinite(Date.parse(values.followUp))) return setError('Enter a valid follow-up date.')
     if (action === 'booking' && !isEditing && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer for this booking.')
-    if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId)) return setError('Select a valid package.')
+    if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId && item.status === 'Active' && item.availability > 0)) return setError('Select an active package with available places, or use a custom arrangement.')
     if (action === 'payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Amount must be a valid number greater than zero.')
     if (action === 'payment' && !values.date) return setError('Enter the date the payment was received.')
     if (action === 'payment' && !isEditing) {
@@ -112,7 +113,7 @@ export function QuickActionModal() {
       {action === 'booking' && <>
         {!isEditing && <Field label="Customer"><Select name="customerId" required defaultValue=""><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>}
         {isEditing && <Field label="Customer"><Input value={current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name || 'Customer unavailable' : 'Customer unavailable'} readOnly /><small>The booking owner is fixed after creation so payment and customer history remain consistent.</small></Field>}
-        {!isEditing && <Field label="Package (optional)"><Select name="packageId" defaultValue=""><option value="">Custom arrangement</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field>}
+        {!isEditing && <Field label="Package (optional)"><Select name="packageId" defaultValue=""><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
         <Field label="Package / arrangement name"><Input name="packageName" defaultValue={value('packageName')} required /></Field>
         <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" defaultValue={value('agreedPrice')} required /></Field>
         <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
