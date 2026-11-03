@@ -174,6 +174,17 @@
   .code-line { margin-top: 1rem; border-radius: .4rem; background: #f4f2ef; padding: .75rem; color: #514c45; font-family: ui-monospace, monospace; font-size: .7rem; }
 }
 
+
+  .modal > h3 { margin: 1.1rem 1.2rem .55rem; font-size: .78rem; }
+  .modal > p { margin: .55rem 1.2rem .9rem; color: var(--color-muted); font-size: .72rem; }
+  .modal > .table-shell { margin: 0 1.2rem .9rem; width: calc(100% - 2.4rem); }
+  .modal > .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin: 1rem 1.2rem; }
+  .detail-grid > div { min-width: 0; border: 1px solid var(--color-line); border-radius: .45rem; padding: .65rem .75rem; }
+  .detail-grid span, .detail-grid strong { display: block; overflow-wrap: anywhere; }
+  .detail-grid span { color: var(--color-muted); font-size: .63rem; }
+  .detail-grid strong { margin-top: .2rem; font-size: .73rem; }
+  .modal > .form-actions { margin: 1rem 0 0; }
+
 @media (max-width: 1250px) {
   .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .metric:nth-child(4) { border-left: 0; border-top: 1px solid var(--color-line); }
