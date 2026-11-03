@@ -5,19 +5,19 @@ import { money } from '@/lib/business'
 import type { Booking, QuickActionType } from '@/types'
 
 const details: Record<QuickActionType, { title: string; description: string }> = {
-  lead: { title: 'Add lead', description: 'Create a new enquiry. This demonstration record is kept in this browser session only.' },
+  lead: { title: 'Add lead', description: 'Create a new customer enquiry and record its source and follow-up details.' },
   customer: { title: 'Add customer', description: 'Create a direct or historical customer without requiring a lead.' },
   booking: { title: 'Create booking', description: 'The agreed amount is saved as a booking snapshot and will not change with package prices.' },
   payment: { title: 'Record payment', description: 'Only confirmed payments reduce the calculated outstanding balance.' },
   traveller: { title: 'Add traveller', description: 'Add an individual traveller to an existing booking.' },
-  package: { title: 'Create package', description: 'Add a package to the internal demonstration catalogue.' },
+  package: { title: 'Create package', description: 'Add a travel package to the agency catalogue.' },
   'supplier-cost': { title: 'Record supplier cost', description: 'Record an amount owed to a supplier for a booking.' },
   'supplier-payment': { title: 'Record supplier payment', description: 'Record money paid against an existing supplier cost.' },
   document: { title: 'Add document link', description: 'Save a link to a document stored in an approved location.' },
 }
 
 export function QuickActionModal() {
-  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
+  const { mode, action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
   if (!action) return null
@@ -101,7 +101,7 @@ export function QuickActionModal() {
     close()
   }
 
-  return <Modal title={isEditing ? `Edit ${action}` : details[action].title} description={isEditing ? 'Update this demonstration record.' : details[action].description} onClose={close}>
+  return <Modal title={isEditing ? `Edit ${action}` : details[action].title} description={details[action].description} onClose={close}>
     <form className="form-grid" onSubmit={submit}>
       {(action === 'lead' || action === 'customer' || action === 'traveller') && <Field label="Full name"><Input name="name" defaultValue={value('name')} autoFocus required /></Field>}
       {(action === 'lead' || action === 'customer') && <Field label="Phone number"><Input name="phone" type="tel" defaultValue={value('phone')} required /></Field>}
@@ -192,7 +192,7 @@ export function QuickActionModal() {
         <Field label="Travel status"><Select name="status" defaultValue={value('status', 'Not Started')}><option>Not Started</option><option>Documents Pending</option><option>Documents Complete</option><option>Ready for Travel</option><option>Departed</option><option>Abroad</option><option>Returned</option></Select></Field>
       </>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="form-actions"><Button type="button" variant="secondary" onClick={close}>Cancel</Button><Button type="submit">{isEditing ? 'Save changes' : 'Save demo record'}</Button></div>
+      <div className="form-actions"><Button type="button" variant="secondary" onClick={close}>Cancel</Button><Button type="submit">{isEditing ? 'Save changes' : mode === 'demo' ? 'Save demo record' : 'Save record'}</Button></div>
     </form>
   </Modal>
 }
