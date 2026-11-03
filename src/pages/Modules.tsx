@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Download, ExternalLink, Filter, Info, Pencil, Plus, Search } from 'lucide-react'
-import { Badge, Button, EmptyState, Input, PageHeader, Select, TableShell } from '@/components/ui'
+import { Download, ExternalLink, Eye, Filter, Info, Pencil, Plus, Search } from 'lucide-react'
+import { Badge, Button, EmptyState, Input, Modal, PageHeader, Select, TableShell } from '@/components/ui'
 import { useAppStore } from '@/hooks/useAppStore'
 import { bookingBalance, confirmedPaid, money, shortDate, supplierOutstanding, travellerCount } from '@/lib/business'
 import type { QuickActionType } from '@/types'
@@ -50,13 +50,32 @@ export function LeadsPage() {
 export function CustomersPage() {
   const controls = useFilter()
   const { customers, bookings, payments, travellers, setAction, setEditing } = useAppStore()
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
+  const selectedCustomer = customers.find((item) => item.id === selectedCustomerId)
+  const customerBookings = bookings.filter((item) => item.customerId === selectedCustomerId)
+  const bookingIds = new Set(customerBookings.map((item) => item.id))
+  const customerTravellers = travellers.filter((item) => bookingIds.has(item.bookingId))
+  const customerPayments = payments.filter((item) => item.customerId === selectedCustomerId)
   const rows = customers.filter((item) => (!controls.filter || (controls.filter === 'Historical' ? item.historical : !item.historical)) && `${item.reference} ${item.name} ${item.phone} ${item.email}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Customer records" description="Permanent customer profiles and their complete relationship with Dandurgu." actionLabel="Add customer" actionType="customer" options={['Current', 'Historical']} {...controls}><TableShell><table><thead><tr><th>Customer</th><th>Contact</th><th>Nationality</th><th>Type</th><th>Bookings</th><th>Travellers</th><th>Total paid</th><th>Outstanding</th><th>Actions</th></tr></thead><tbody>{rows.map((customer) => {
-    const customerBookings = bookings.filter((item) => item.customerId === customer.id)
-    return <tr key={customer.id}><td><strong>{customer.name}</strong><span className="cell-sub">{customer.reference}</span></td><td>{customer.phone}<span className="cell-sub">{customer.email || 'No email recorded'}</span></td><td>{customer.nationality}</td><td>{customer.historical ? <Badge>Historical</Badge> : 'Current'}</td><td>{customerBookings.length}</td><td>{travellers.filter((traveller) => traveller.customerId === customer.id).length}</td><td>{money(payments.filter((item) => item.customerId === customer.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0))}</td><td><strong>{money(customerBookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0))}</strong></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'customer', id: customer.id }); setAction('customer') }}><Pencil size={14} /> Edit</Button></td></tr>
-  })}</tbody></table></TableShell></Module>
+  return <>
+    <Module title="Customer records" description="Permanent customer profiles and their complete relationship with Dandurgu." actionLabel="Add customer" actionType="customer" options={['Current', 'Historical']} {...controls}><TableShell><table><thead><tr><th>Customer</th><th>Contact</th><th>Nationality</th><th>Type</th><th>Bookings</th><th>Travellers</th><th>Total paid</th><th>Outstanding</th><th>Actions</th></tr></thead><tbody>{rows.map((customer) => {
+      const customerBookings = bookings.filter((item) => item.customerId === customer.id)
+      const bookingIds = new Set(customerBookings.map((item) => item.id))
+      const travellerTotal = travellers.filter((traveller) => bookingIds.has(traveller.bookingId)).length
+      return <tr key={customer.id}><td><strong>{customer.name}</strong><span className="cell-sub">{customer.reference}</span></td><td>{customer.phone}<span className="cell-sub">{customer.email || 'No email recorded'}</span></td><td>{customer.nationality}</td><td>{customer.historical ? <Badge>Historical</Badge> : 'Current'}</td><td>{customerBookings.length}</td><td>{travellerTotal}</td><td>{money(payments.filter((item) => item.customerId === customer.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0))}</td><td><strong>{money(customerBookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0))}</strong></td><td><div className="table-actions"><Button variant="secondary" onClick={() => setSelectedCustomerId(customer.id)}><Eye size={14} /> View</Button><Button variant="secondary" onClick={() => { setEditing({ type: 'customer', id: customer.id }); setAction('customer') }}><Pencil size={14} /> Edit</Button></div></td></tr>
+    })}</tbody></table></TableShell></Module>
+    {selectedCustomer && <Modal title={selectedCustomer.name} description={`${selectedCustomer.reference} · Customer profile`} onClose={() => setSelectedCustomerId(null)}>
+      <div className="detail-grid"><div><span>Phone</span><strong>{selectedCustomer.phone}</strong></div><div><span>Email</span><strong>{selectedCustomer.email || 'Not recorded'}</strong></div><div><span>Nationality</span><strong>{selectedCustomer.nationality}</strong></div><div><span>City</span><strong>{selectedCustomer.city || 'Not recorded'}</strong></div></div>
+      <h3>Booking history ({customerBookings.length})</h3>
+      {customerBookings.length ? <TableShell><table><thead><tr><th>Booking</th><th>Package</th><th>Travel dates</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>{customerBookings.map((booking) => <tr key={booking.id}><td>{booking.reference}</td><td>{booking.packageName}</td><td>{shortDate(booking.departureDate)} to {shortDate(booking.returnDate)}</td><td>{money(confirmedPaid(booking.id, payments))}</td><td>{money(bookingBalance(booking, payments))}</td><td><Badge>{booking.status}</Badge></td></tr>)}</tbody></table></TableShell> : <p>No bookings recorded for this customer.</p>}
+      <h3>Travellers on these bookings ({customerTravellers.length})</h3>
+      {customerTravellers.length ? <TableShell><table><thead><tr><th>Name</th><th>Booking</th><th>Group</th><th>Status</th></tr></thead><tbody>{customerTravellers.map((traveller) => <tr key={traveller.id}><td>{traveller.name}</td><td>{bookings.find((item) => item.id === traveller.bookingId)?.reference || '—'}</td><td>{traveller.group || '—'}</td><td><Badge>{traveller.status}</Badge></td></tr>)}</tbody></table></TableShell> : <p>No travellers recorded on this customer's bookings.</p>}
+      <h3>Payment history ({customerPayments.length})</h3>
+      {customerPayments.length ? <TableShell><table><thead><tr><th>Reference</th><th>Date</th><th>Purpose</th><th>Amount</th><th>Status</th></tr></thead><tbody>{customerPayments.map((payment) => <tr key={payment.id}><td>{payment.reference}</td><td>{shortDate(payment.date)}</td><td>{payment.purpose}</td><td>{money(payment.amount)}</td><td><Badge>{payment.status}</Badge></td></tr>)}</tbody></table></TableShell> : <p>No payments recorded for this customer.</p>}
+      <div className="form-actions"><Button variant="secondary" onClick={() => setSelectedCustomerId(null)}>Close</Button><Button onClick={() => { setEditing({ type: 'customer', id: selectedCustomer.id }); setAction('customer'); setSelectedCustomerId(null) }}><Pencil size={14} /> Edit customer</Button></div>
+    </Modal>}
+  </>
 }
-
 export function PackagesPage() {
   const controls = useFilter()
   const { packages, setAction, setEditing } = useAppStore()
