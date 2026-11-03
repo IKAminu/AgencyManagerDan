@@ -85,6 +85,7 @@ export interface Payment {
   method: 'Bank Transfer' | 'Cash' | 'POS' | 'Other'
   status: 'Pending' | 'Confirmed' | 'Reversed' | 'Failed'
   transactionReference?: string
+  reversalReason?: string
   historical?: boolean
 }
 
