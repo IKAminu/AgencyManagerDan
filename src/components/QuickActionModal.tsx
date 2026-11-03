@@ -49,7 +49,7 @@ export function QuickActionModal() {
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
       if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
-      if (!selectedCustomer && values.bookingId) return setError('A new customer cannot be linked to an existing customer's booking. Create their booking separately first.')
+      if (!selectedCustomer && values.bookingId) return setError("A new customer cannot be linked to an existing customer's booking. Create their booking separately first.")
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
       if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
     }
