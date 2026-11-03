@@ -76,7 +76,7 @@ async function saveStore(data: {
   leads: Lead[]; customers: Customer[]; packages: TravelPackage[]; bookings: Booking[];
   travellers: Traveller[]; payments: Payment[]; supplierCosts: SupplierCost[];
   supplierPayments: SupplierPayment[]; documents: DocumentRecord[]
-}) {
+}, isDemo: boolean) {
   // Keep parent records ahead of their dependants so foreign keys remain valid.
   await save('leads', data.leads.map((r) => ({
     id:r.id, reference:r.reference, name:r.name, phone:r.phone, email:r.email ?? null,
@@ -88,41 +88,41 @@ async function saveStore(data: {
     id:r.id, reference:r.reference, name:r.name, phone:r.phone, email:r.email ?? null,
     nationality:r.nationality, city:r.city ?? null, lead_id:r.leadId ?? null,
     historical:r.historical ?? false, notes:r.notes ?? null, created_at:r.createdAt,
-  }))), isDemo)
+  })), isDemo)
   await save('packages', data.packages.map((r) => ({
     id:r.id, code:r.code, name:r.name, category:r.category, destination:r.destination,
     duration:r.duration, price:r.price, estimated_cost:r.estimatedCost, currency:r.currency,
     availability:r.availability, status:r.status,
-  }))), isDemo)
+  })), isDemo)
   await save('bookings', data.bookings.map((r) => ({
     id:r.id, reference:r.reference, customer_id:r.customerId, package_id:r.packageId ?? null,
     package_name:r.packageName, agreed_price:r.agreedPrice, party_size:r.partySize,
     currency:r.currency, booking_date:r.bookingDate, departure_date:r.departureDate,
     return_date:r.returnDate, status:r.status, supplier:r.supplier ?? null, historical:r.historical ?? false,
-  }))), isDemo)
+  })), isDemo)
   await save('travellers', data.travellers.map((r) => ({
     id:r.id, name:r.name, customer_id:r.customerId ?? null, booking_id:r.bookingId,
     nationality:r.nationality, status:r.status, group_label:r.group ?? null,
     documents_complete:r.documentsComplete, passport_expiry:r.passportExpiry ?? null,
-  }))), isDemo)
+  })), isDemo)
   await save('payments', data.payments.map((r) => ({
     id:r.id, reference:r.reference, booking_id:r.bookingId ?? null, customer_id:r.customerId,
     package_id:r.packageId ?? null, purpose:r.purpose, amount:r.amount, payment_date:r.date,
     method:r.method, status:r.status, transaction_reference:r.transactionReference ?? null,
     reversal_reason:r.reversalReason ?? null, historical:r.historical ?? false,
-  }))), isDemo)
+  })), isDemo)
   await save('supplier_costs', data.supplierCosts.map((r) => ({
     id:r.id, booking_id:r.bookingId, supplier_name:r.supplier, category:r.category,
     amount:r.amount, due_date:r.dueDate, paid:r.paid, status:r.status,
-  }))), isDemo)
+  })), isDemo)
   await save('supplier_payments', data.supplierPayments.map((r) => ({
     id:r.id, supplier_cost_id:r.supplierCostId, amount:r.amount, payment_date:r.date,
     method:r.method, reference:r.reference ?? null, status:r.status ?? 'Confirmed', void_reason:r.voidReason ?? null,
-  }))), isDemo)
+  })), isDemo)
   await save('documents', data.documents.map((r) => ({
     id:r.id, name:r.name, category:r.category, related_type:r.relatedType,
     related_reference:r.relatedReference, url:r.url, recorded_at:r.recordedAt, status:r.status,
-  }))), isDemo)
+  })), isDemo)
 }
 
 
