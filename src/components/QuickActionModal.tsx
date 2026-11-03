@@ -101,12 +101,12 @@ export function QuickActionModal() {
           <Field label="Related booking (optional)" hint="Only select a booking belonging to the customer above."><Select name="bookingId" defaultValue=""><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
         </>}
         {isEditing && <Field label="Customer"><Input value={(current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name : undefined) || 'Customer unavailable'} readOnly /></Field>}
-        <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && current?.status !== 'Pending'} required /></Field>
+        <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && (!current || !('status' in current) || current.status !== 'Pending')} required /></Field>
         <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         {!isEditing && <Field label="Status"><Select name="status" defaultValue="Confirmed"><option>Pending</option><option>Confirmed</option></Select></Field>}
-        {isEditing && current?.status === 'Pending' && <Field label="Status"><Select name="status" defaultValue="Pending"><option>Pending</option><option>Confirmed</option><option>Failed</option></Select></Field>}
-        {isEditing && current?.status !== 'Pending' && <Field label="Status"><Input value={value('status')} readOnly /></Field>}
+        {isEditing && current && 'status' in current && current.status === 'Pending' && <Field label="Status"><Select name="status" defaultValue="Pending"><option>Pending</option><option>Confirmed</option><option>Failed</option></Select></Field>}
+        {isEditing && current && 'status' in current && current.status !== 'Pending' && <Field label="Status"><Input value={value('status')} readOnly /></Field>}
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
       </>}
       {action === 'document' && <>
