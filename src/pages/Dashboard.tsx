@@ -41,14 +41,14 @@ export function Dashboard() {
       </section>
       <section className="content-section">
         <div className="section-title"><div><h2>Pending follow-ups</h2><p>Due and overdue lead activity.</p></div><Link to="/leads">Open leads</Link></div>
-        <div className="list">{leads.filter((lead) => lead.followUp && daysFromToday(lead.followUp) <= 1 && lead.status !== 'Converted').map((lead) => <div className="list-row" key={lead.id}><div className="avatar">{lead.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{lead.name}</strong><span>{lead.service} · {lead.source}</span></div><div className="list-end"><Badge>{lead.status}</Badge><small>{daysFromToday(lead.followUp!) < 0 ? 'Overdue' : 'Due today'}</small></div></div>)}</div>
+        <div className="list">{leads.filter((lead) => lead.followUp && daysFromToday(lead.followUp) <= 1 && !['Converted', 'Lost', 'Not Interested'].includes(lead.status)).map((lead) => <div className="list-row" key={lead.id}><div className="avatar">{lead.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{lead.name}</strong><span>{lead.service} · {lead.source}</span></div><div className="list-end"><Badge>{lead.status}</Badge><small>{daysFromToday(lead.followUp!) < 0 ? 'Overdue' : 'Due today'}</small></div></div>)}</div>{!leads.some((lead) => lead.followUp && daysFromToday(lead.followUp) <= 1 && !['Converted', 'Lost', 'Not Interested'].includes(lead.status)) && <div className="empty"><strong>No follow-ups due</strong><p>There are no overdue or due-today lead follow-ups.</p></div>}
       </section>
       <section className="content-section">
         <div className="section-title"><div><h2>Currently abroad</h2><p>Travel has commenced; not marked returned.</p></div><Link to="/travellers">Operations</Link></div>
         <div className="list">{abroad.map((traveller) => {
           const booking = bookings.find((item) => item.id === traveller.bookingId)!
           return <div className="list-row" key={traveller.id}><div className="avatar">{traveller.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{traveller.name}</strong><span>{booking.reference} · {booking.packageName}</span></div><div className="list-end"><Badge>{traveller.status}</Badge><small>Returns {shortDate(booking.returnDate)}</small></div></div>
-        })}</div>
+        })}</div>{!abroad.length && <div className="empty"><strong>No travellers currently abroad</strong><p>Travellers marked Abroad will appear here.</p></div>}
       </section>
       <section className="content-section span-two">
         <div className="section-title"><div><h2>Outstanding balances</h2><p>Calculated from agreed prices and confirmed transactions.</p></div><Link to="/payments">Finance overview</Link></div>
