@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, Menu, Package, Plus, Search, Settings, Users, WalletCards, X } from 'lucide-react'
-import { appConfig } from '@/config/app'
+import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LogOut, Menu, Package, Plus, Search, Settings, Users, WalletCards, X } from 'lucide-react'
+import { appConfig } from '@/config/app'\nimport { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
 import { QuickActionModal } from '@/components/QuickActionModal'
@@ -74,7 +74,7 @@ export function AppLayout() {
         <div className="top-actions">
           <div className="popover-wrap"><IconButton label={alerts.length ? `View ${alerts.length} notifications` : 'No current notifications'} onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={19} />{alerts.length > 0 && <span className="notification-dot" />}</IconButton>{notificationsOpen && <div className="notifications"><div><strong>Current alerts</strong><span>{alerts.length} items · Based on current records</span></div>{alerts.length ? alerts.map((alert, index) => <button key={`${alert.path}-${index}`} onClick={() => { navigate(alert.path); setNotificationsOpen(false) }}><strong>{alert.title}</strong><span>{alert.detail}</span></button>) : <p className="notification-empty">Nothing needs attention right now.</p>}</div>}</div>
           <Button className="quick-button" onClick={() => setAction('lead')}><Plus size={17} /> Quick action <ChevronDown size={15} /></Button>
-          <div className="user-avatar" title="Demo operator">AO</div>
+          <IconButton label="Sign out" title="Sign out" onClick={() => { void supabase?.auth.signOut() }}><LogOut size={18} /></IconButton>
         </div>
       </header>
       <main><Outlet /></main>
