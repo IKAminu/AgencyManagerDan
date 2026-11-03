@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, Field, Input, Modal, Select } from '@/components/ui'
+import { money } from '@/lib/business'
 import type { QuickActionType } from '@/types'
 
 const details: Record<QuickActionType, { title: string; description: string }> = {
@@ -42,6 +43,13 @@ export function QuickActionModal() {
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
+    if (action === 'payment' && !isEditing) {
+      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1))
+      if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
+      if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
+      if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
+      if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
+    }
     if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
     if (action === 'supplier-payment' && Number(values.amount) <= 0) return setError('Payment amount must be greater than zero.')
     if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
@@ -79,9 +87,19 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Pending Confirmation')}><option>Enquiry</option><option>Pending Confirmation</option><option>Confirmed</option><option>In Preparation</option><option>Ready for Travel</option><option>Travelling</option><option>Completed</option><option>Cancelled</option></Select></Field>
       </>}
       {action === 'payment' && <>
-        {!isEditing && <Field label="Booking"><Select name="bookingId" required>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>}
+        {!isEditing && <>
+          <Field label="Customer" hint="Start typing a name. Choose a suggestion, or enter a new customer's name."><Input name="customerName" list="payment-customer-options" placeholder="Search or enter customer name" required /><datalist id="payment-customer-options">{customers.map((customer) => <option key={customer.id} value={`${customer.name} — ${customer.reference}`} />)}</datalist></Field>
+          <Field label="New customer's phone number" hint="Only needed when adding a new customer."><Input name="customerPhone" type="tel" placeholder="e.g. +234..." /></Field>
+          <Field label="New customer's email (optional)"><Input name="customerEmail" type="email" /></Field>
+          <Field label="New customer's nationality"><Input name="customerNationality" defaultValue="Nigerian" /></Field>
+          <Field label="What is this payment for?"><Select name="purposeType" defaultValue="package"><option value="package">Existing package</option><option value="custom">Custom service or item</option></Select></Field>
+          <Field label="Package"><Select name="packageId" defaultValue=""><option value="">Select a package</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field>
+          <Field label="Custom payment description"><Input name="customPurpose" placeholder="e.g. Visa processing, flight ticket, hotel" /></Field>
+          <Field label="Related booking (optional)" hint="Only select a booking belonging to the customer above."><Select name="bookingId" defaultValue=""><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
+        </>}
+        {isEditing && <Field label="Customer"><Input value={customers.find((customer) => customer.id === current?.customerId)?.name || 'Customer unavailable'} readOnly /></Field>}
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} required /></Field>
-        <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date')} required /></Field>
+        <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
