@@ -33,10 +33,13 @@
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
 - Supabase client/service boundary, PWA manifest and GitHub Pages workflow.
 
-## Mocked
+## Data modes and access
 
-- All records, notifications and manual writes. Refreshing resets records.
-- Demonstration operator identity.
+- Live Mode is available only after an authorised Supabase account signs in and completes TOTP multi-factor authentication.
+- Demo Mode is available from the sign-in screen. It uses the sample records bundled in `src/data/mockData.ts`; it does not query or write business data to Supabase.
+- Demo edits exist only in React memory and reset when the guest leaves or refreshes.
+- Live Mode loads rows marked `is_demo=false` and saves live changes to Supabase.
+- Public/anonymous database table privileges have been revoked. RLS policies require an AAL2 session and one of the two authorised email addresses for live rows.
 - Google Drive links are sample references only.
 
 ## Partially implemented
@@ -44,15 +47,15 @@
 - Tables provide search and status filters; full column sorting and server pagination await the data backend.
 - Main creation flows work; complete edit/archive/convert/reversal/group-management detail workflows need persisted transactions.
 - Traveller-to-customer links currently exist in the mock-data model only; they are not persisted to Supabase until the database schema and service layer are implemented.
-- Authentication integration points exist, but real protected routes require Supabase Auth.
+- Authentication uses Supabase Auth, with TOTP MFA required before the live workspace mounts. Account provisioning remains limited to the two manually created users.
 
 ## Not configured
 
-- Supabase schema, RLS, accounts, backups and database functions.
+- Automated database backups and restore testing. Supabase leaked-password protection is currently disabled and should be enabled in Auth password settings.
 - Website submission endpoint, Google Drive API and Meta Conversions API.
 - Production custom domain and DNS.
 
-Before production, approve and deploy the schema, implement transactional lead conversion and financial reversals, connect authentication, verify all RLS policies, and complete a security review for sensitive traveller information.
+Before entering real customer data, complete the security review for sensitive traveller information, verify backups and restore procedures, enable leaked-password protection, and test live read/write behaviour with both authorised accounts.
 
 
 ## Customer and booking detail views
@@ -60,4 +63,4 @@ Before production, approve and deploy the schema, implement transactional lead c
 - Booking records now open a detail panel showing the booking owner, agreed price, confirmed payments, outstanding balance, supplier, status, travelling party, and linked payment history.
 - Booking creation validates the customer relationship and supports selecting an existing package or entering a custom arrangement. The agreed price remains the booking's own snapshot.
 - Booking owner is intentionally fixed after creation. Changing it later would require a controlled transfer of associated payments and traveller relationships.
-- Detail views use current mock store data and are not yet persisted across refreshes.
+- Detail views use the active store. Live Mode persists edits in Supabase; Demo Mode keeps edits in session memory only.
