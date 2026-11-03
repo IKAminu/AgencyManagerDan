@@ -95,7 +95,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, action, editing, leads, customers])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
