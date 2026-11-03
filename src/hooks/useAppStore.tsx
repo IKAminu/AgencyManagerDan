@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
+import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, initialSupplierPayments, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
 type AppStore = {
@@ -36,7 +36,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [payments, setPayments] = useState(initialPayments)
   const [travellers, setTravellers] = useState(initialTravellers)
   const [supplierCosts, setSupplierCosts] = useState<SupplierCost[]>(initialSupplierCosts)
-  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([])
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(initialSupplierPayments)
   const [documents, setDocuments] = useState<DocumentRecord[]>(initialDocuments)
   const [action, setAction] = useState<QuickActionType | null>(null)
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
