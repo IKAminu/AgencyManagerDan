@@ -46,9 +46,10 @@ export function QuickActionModal() {
     if (action === 'booking' && (!values.departureDate || !values.returnDate || !Number.isFinite(Date.parse(values.departureDate)) || !Number.isFinite(Date.parse(values.returnDate)))) return setError('Enter valid departure and return dates.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
     if (action === 'booking' && (!Number.isFinite(Number(values.agreedPrice)) || Number(values.agreedPrice) <= 0)) return setError('Agreed price must be a valid number greater than zero.')
+    if (action === 'booking' && (!Number.isInteger(Number(values.partySize)) || Number(values.partySize) < 1)) return setError('Enter the number of travellers as a whole number of at least one.')
     if (action === 'lead' && values.followUp && !Number.isFinite(Date.parse(values.followUp))) return setError('Enter a valid follow-up date.')
     if (action === 'booking' && !isEditing && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer for this booking.')
-    if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId && item.status === 'Active' && item.availability > 0)) return setError('Select an active package with available places, or use a custom arrangement.')
+    if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId && item.status === 'Active' && item.availability >= Number(values.partySize))) return setError('The selected package does not have enough available places for this travelling party.')
     if (action === 'payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Amount must be a valid number greater than zero.')
     if (action === 'payment' && (!values.date || !Number.isFinite(Date.parse(values.date)))) return setError('Enter a valid date the payment was received.')
     if (action === 'payment' && !isEditing) {
@@ -116,6 +117,7 @@ export function QuickActionModal() {
         {!isEditing && <Field label="Package (optional)"><Select name="packageId" defaultValue=""><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
         <Field label="Package / arrangement name"><Input name="packageName" defaultValue={value('packageName')} required /></Field>
         <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" defaultValue={value('agreedPrice')} required /></Field>
+        <Field label="Number of travellers"><Input name="partySize" type="number" min="1" step="1" defaultValue={value('partySize', '1')} required /></Field>
         <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
         <Field label="Return date"><Input name="returnDate" type="date" defaultValue={value('returnDate')} required /></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Pending Confirmation')}><option>Enquiry</option><option>Pending Confirmation</option><option>Confirmed</option><option>In Preparation</option><option>Ready for Travel</option><option>Travelling</option><option>Completed</option><option>Cancelled</option></Select></Field>
