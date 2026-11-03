@@ -17,8 +17,18 @@ export const travellerCount = (bookingId: string, travellers: Traveller[]) =>
 
 export const supplierOutstanding = (cost: SupplierCost) => Math.max(0, cost.amount - cost.paid)
 
+const lagosDateKey = (date: Date) => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date)
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value || ''
+  return [part('year'), part('month'), part('day')].join('-')
+}
+
+export const todayDate = () => lagosDateKey(new Date())
+
 export const daysFromToday = (date: string) => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return Math.ceil((new Date(`${date}T00:00:00`).getTime() - today.getTime()) / 86400000)
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return Number.NaN
+  const target = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  const today = todayDate().split('-').map(Number)
+  return Math.round((target - Date.UTC(today[0], today[1] - 1, today[2])) / 86400000)
 }
