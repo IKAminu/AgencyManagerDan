@@ -1,0 +1,175 @@
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
+
+const ALLOWED_EMAILS = new Set([
+  'ikaminumail@gmail.com',
+  'dandurguairtravels@gmail.com',
+])
+
+type AuthStep = 'login' | 'mfa' | 'enroll'
+
+function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
+  const [step, setStep] = useState<AuthStep>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [factorId, setFactorId] = useState('')
+  const [challengeId, setChallengeId] = useState('')
+  const [qrCode, setQrCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const beginSecondFactor = async (session: Session) => {
+    const { data: factors, error: factorsError } = await supabase!.auth.mfa.listFactors()
+    if (factorsError) throw factorsError
+
+    const verifiedFactor = factors.totp.find((factor) => factor.status === 'verified')
+    if (verifiedFactor) {
+      const { data: challenge, error: challengeError } = await supabase!.auth.mfa.challenge({ factorId: verifiedFactor.id })
+      if (challengeError) throw challengeError
+      setFactorId(verifiedFactor.id)
+      setChallengeId(challenge.id)
+      setStep('mfa')
+      return
+    }
+
+    const unverifiedFactors = factors.totp.filter((factor) => factor.status !== 'verified')
+    for (const factor of unverifiedFactors) {
+      await supabase!.auth.mfa.unenroll({ factorId: factor.id })
+    }
+
+    const { data: enrollment, error: enrollmentError } = await supabase!.auth.mfa.enroll({
+      factorType: 'totp',
+      issuer: 'Dandurgu Headquarters',
+    })
+    if (enrollmentError) throw enrollmentError
+    setFactorId(enrollment.id)
+    setQrCode(enrollment.totp.qr_code)
+    setStep('enroll')
+  }
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError('')
+    setBusy(true)
+    try {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!ALLOWED_EMAILS.has(normalizedEmail)) throw new Error('This email address is not authorised to access Dandurgu Headquarters.')
+      const { data, error: loginError } = await supabase!.auth.signInWithPassword({ email: normalizedEmail, password })
+      if (loginError) throw loginError
+      if (!data.session) throw new Error('Sign-in did not return a valid session.')
+      await beginSecondFactor(data.session)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not sign in. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError('')
+    setBusy(true)
+    try {
+      let activeChallengeId = challengeId
+      if (!activeChallengeId) {
+        const { data, error: challengeError } = await supabase!.auth.mfa.challenge({ factorId })
+        if (challengeError) throw challengeError
+        activeChallengeId = data.id
+      }
+      const { error: verifyError } = await supabase!.auth.mfa.verify({
+        factorId,
+        challengeId: activeChallengeId,
+        code: code.replace(/\s/g, ''),
+      })
+      if (verifyError) throw verifyError
+      const { data, error: sessionError } = await supabase!.auth.getSession()
+      if (sessionError) throw sessionError
+      if (!data.session) throw new Error('Your session could not be confirmed. Please sign in again.')
+      onAuthenticated(data.session)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The verification code was not accepted.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleBackToLogin = async () => {
+    await supabase!.auth.signOut()
+    setStep('login')
+    setPassword('')
+    setCode('')
+    setError('')
+  }
+
+  return <div className="auth-screen">
+    <section className="auth-panel">
+      <img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" className="auth-logo" />
+      <p className="auth-eyebrow">DANDURGU AIR TRAVEL & TOURS</p>
+      <h1>{step === 'login' ? 'Headquarters sign in' : step === 'enroll' ? 'Secure your account' : 'Two-step verification'}</h1>
+      <p className="auth-description">
+        {step === 'login' ? 'Sign in with your authorised agency account.' : step === 'enroll' ? 'Connect an authenticator app to your account. This is required before accessing agency records.' : 'Enter the current six-digit code from your authenticator app.'}
+      </p>
+
+      {step === 'login' && <form className="auth-form" onSubmit={handleLogin}>
+        <label className="field-group">Email address<input className="field" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        <label className="field-group">Password<input className="field" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button className="button button-primary auth-submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      </form>}
+
+      {step === 'enroll' && <form className="auth-form" onSubmit={handleVerify}>
+        <div className="auth-qr"><img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrCode)}`} alt="Authenticator setup QR code" /></div>
+        <p className="auth-help">Open Google Authenticator, Microsoft Authenticator, 1Password or another TOTP app. Scan this QR code, then enter the six-digit code it generates.</p>
+        <label className="field-group">Authenticator code<input className="field auth-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={code} onChange={(event) => setCode(event.target.value)} placeholder="000000" /></label>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button className="button button-primary auth-submit" disabled={busy || code.replace(/\s/g, '').length < 6}>{busy ? 'Verifying…' : 'Enable two-step verification'}</button>
+      </form>}
+
+      {step === 'mfa' && <form className="auth-form" onSubmit={handleVerify}>
+        <label className="field-group">Six-digit code<input className="field auth-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={code} onChange={(event) => setCode(event.target.value)} placeholder="000000" /></label>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button className="button button-primary auth-submit" disabled={busy || code.replace(/\s/g, '').length < 6}>{busy ? 'Verifying…' : 'Verify and continue'}</button>
+      </form>}
+
+      {step !== 'login' && <button className="auth-back" type="button" onClick={handleBackToLogin}>Cancel and return to sign in</button>}
+      <p className="auth-footnote">Access is restricted to authorised Dandurgu accounts.</p>
+    </section>
+  </div>
+}
+
+export function AuthGate({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [ready, setReady] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    const checkSession = async (current: Session | null) => {
+      if (!alive) return
+      if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
+        if (current) await supabase!.auth.signOut()
+        if (alive) { setSession(null); setAuthenticated(false); setReady(true) }
+        return
+      }
+      const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (alive) {
+        setSession(current)
+        setAuthenticated(!error && data.currentLevel === 'aal2')
+        setReady(true)
+      }
+    }
+    supabase!.auth.getSession().then(({ data }) => checkSession(data.session))
+    const { data: listener } = supabase!.auth.onAuthStateChange((_event, current) => {
+      void checkSession(current)
+    })
+    return () => { alive = false; listener.subscription.unsubscribe() }
+  }, [])
+
+  if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
+  if (!ready) return <div className="auth-loading">Loading secure session…</div>
+  if (!session || !authenticated) return <AuthScreen onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true) }} />
+  return <>{children}</>
+}
