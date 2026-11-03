@@ -31,3 +31,11 @@
 - Production custom domain and DNS.
 
 Before production, approve and deploy the schema, implement transactional lead conversion and financial reversals, connect authentication, verify all RLS policies, and complete a security review for sensitive traveller information.
+
+
+## Customer and booking detail views
+- Customer records now open a detail panel showing contact information, all bookings, travellers attached to those bookings, and the customer's full payment history (including pending and reversed entries).
+- Booking records now open a detail panel showing the booking owner, agreed price, confirmed payments, outstanding balance, supplier, status, travelling party, and linked payment history.
+- Booking creation validates the customer relationship and supports selecting an existing package or entering a custom arrangement. The agreed price remains the booking's own snapshot.
+- Booking owner is intentionally fixed after creation. Changing it later would require a controlled transfer of associated payments and traveller relationships.
+- Detail views use current mock store data and are not yet persisted across refreshes.
