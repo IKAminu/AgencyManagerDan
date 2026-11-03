@@ -187,6 +187,6 @@ export function AuthGate({ children, onMode }: { children: (mode: AppMode) => Re
 
   if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
   if (!ready) return <div className="auth-loading">Loading secure session…</div>
-  if (!session || !authenticated) return <AuthScreen onDemo={() => { setMode('demo'); onMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live'); onMode('live') }} />
+  if (!session || !authenticated) return <AuthScreen onDemo={() => { void supabase?.auth.signOut(); setMode('demo'); onMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live'); onMode('live') }} />
   return <>{mode === 'live' ? children('live') : mode === 'demo' ? children('demo') : null}</>
 }
