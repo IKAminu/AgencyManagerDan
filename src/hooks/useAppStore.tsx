@@ -128,7 +128,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     return () => {
       active = false
       if (refreshTimer) window.clearTimeout(refreshTimer)
-      void supabase.removeChannel(channel)
+      void supabase!.removeChannel(channel)
     }
   }, [isDemo, dataReady, dataError])
   const [action, setAction] = useState<QuickActionType | null>(null)
