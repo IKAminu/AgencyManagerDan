@@ -55,7 +55,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: reference('CUS'), name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') setBookings((items) => [{ id: id(), reference: `BKG-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status: (values.status || 'Pending Confirmation') as Booking['status'] }, ...items])
-    if (type === 'payment') setPayments((items) => [{ id: id(), reference: reference('PAY'), bookingId: values.bookingId, customerId: bookings.find((booking) => booking.id === values.bookingId)?.customerId ?? '', amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: (values.status || 'Confirmed') as Payment['status'], transactionReference: values.transactionReference || values.reference }, ...items])
+    if (type === 'payment') {
+      let customer = customers.find((item) => item.reference === values.customerReference)
+      if (!customer && values.customerName?.trim()) {
+        customer = { id: id(), reference: reference('CUS'), name: values.customerName.trim(), phone: values.customerPhone.trim(), email: values.customerEmail.trim() || undefined, nationality: values.customerNationality || 'Nigerian', createdAt: today() }
+        setCustomers((items) => [customer!, ...items])
+      }
+      if (customer) {
+        const selectedBooking = bookings.find((booking) => booking.id === values.bookingId && booking.customerId === customer!.id)
+        setPayments((items) => [{ id: id(), reference: reference('PAY'), bookingId: selectedBooking?.id, customerId: customer!.id, packageId: values.purposeType === 'package' ? values.packageId || undefined : undefined, purpose: values.purposeType === 'package' ? (packages.find((item) => item.id === values.packageId)?.name || 'Package payment') : values.customPurpose.trim(), amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: (values.status || 'Confirmed') as Payment['status'], transactionReference: values.transactionReference || undefined }, ...items])
+      }
+    }
     if (type === 'traveller') setTravellers((items) => [{ id: id(), name: values.name, bookingId: values.bookingId, nationality: values.nationality || 'Nigerian', status: (values.status || 'Not Started') as Traveller['status'], group: values.group || undefined, documentsComplete: ['Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(values.status) }, ...items])
     setAction(null)
   }
