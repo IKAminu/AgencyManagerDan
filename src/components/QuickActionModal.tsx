@@ -50,7 +50,7 @@ export function QuickActionModal() {
     if (action === 'booking' && !isEditing && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer for this booking.')
     if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId && item.status === 'Active' && item.availability > 0)) return setError('Select an active package with available places, or use a custom arrangement.')
     if (action === 'payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Amount must be a valid number greater than zero.')
-    if (action === 'payment' && !values.date) return setError('Enter the date the payment was received.')
+    if (action === 'payment' && (!values.date || !Number.isFinite(Date.parse(values.date)))) return setError('Enter a valid date the payment was received.')
     if (action === 'payment' && !isEditing) {
       const enteredName = values.customerName.split(' — ')[0].trim().toLocaleLowerCase()
       const matchingCustomers = customers.filter((customer) => customer.name.trim().toLocaleLowerCase() === enteredName)
@@ -69,11 +69,11 @@ export function QuickActionModal() {
       if (booking && alreadyConfirmed + Number(values.amount) > booking.agreedPrice) return setError('Confirming this payment would exceed the booking balance. Check other confirmed payments or correct the amount.')
     }
     if (action === 'supplier-cost' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Supplier cost must be a valid number greater than zero.')
-    if (action === 'supplier-cost' && !values.dueDate) return setError('Enter the supplier cost due date.')
+    if (action === 'supplier-cost' && (!values.dueDate || !Number.isFinite(Date.parse(values.dueDate)))) return setError('Enter a valid supplier cost due date.')
     if (action === 'supplier-cost' && values.bookingId && !bookings.some((booking) => booking.id === values.bookingId)) return setError('Select a valid booking for this supplier cost.')
     if (action === 'supplier-cost' && isEditing && Number(values.amount) < (supplierCosts.find((cost) => cost.id === editing?.id)?.paid ?? 0)) return setError('Supplier cost cannot be reduced below the amount already paid.')
     if (action === 'supplier-payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Payment amount must be a valid number greater than zero.')
-    if (action === 'supplier-payment' && !values.date) return setError('Enter the date the supplier payment was made.')
+    if (action === 'supplier-payment' && (!values.date || !Number.isFinite(Date.parse(values.date)))) return setError('Enter a valid date the supplier payment was made.')
     if (action === 'supplier-payment' && !supplierCosts.some((cost) => cost.id === values.supplierCostId && cost.paid < cost.amount)) return setError('Select a supplier cost with an outstanding balance.')
     if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
     if (action === 'package' && (!Number.isFinite(Number(values.price)) || Number(values.price) <= 0)) return setError('Package selling price must be a valid number greater than zero.')
