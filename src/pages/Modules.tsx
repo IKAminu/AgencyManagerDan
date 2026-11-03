@@ -125,11 +125,11 @@ export function TravellersPage() {
   const selected = groupRows.find((group) => group.key === selectedGroup)
   return <>
     <Module title="Travellers & operations" description="Track each traveller separately, while managing family and group readiness by booking." actionLabel="Add traveller" actionType="traveller" options={['Not Started', 'Documents Pending', 'Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned']} {...controls}>
-      <div className="summary-strip">
-        <div><span>Travellers shown</span><strong>{rows.length}</strong></div>
-        <div><span>Ready for travel</span><strong>{rows.filter((item) => item.status === 'Ready for Travel' || item.status === 'Departed' || item.status === 'Abroad' || item.status === 'Returned').length}</strong></div>
-        <div><span>Documents complete</span><strong>{rows.filter((item) => item.documentsComplete).length}</strong></div>
-        <div><span>Needs attention</span><strong>{rows.filter((item) => !item.documentsComplete || item.status === 'Documents Pending').length}</strong></div>
+      <div className="traveller-metrics" aria-label="Traveller overview">
+        <div className="traveller-metric"><span className="traveller-metric-label">Travellers shown</span><strong>{rows.length}</strong><span className="traveller-metric-caption">Matching your current search</span></div>
+        <div className="traveller-metric"><span className="traveller-metric-label">Ready for travel</span><strong>{rows.filter((item) => ['Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(item.status)).length}</strong><span className="traveller-metric-caption">Ready, travelling or returned</span></div>
+        <div className="traveller-metric"><span className="traveller-metric-label">Documents complete</span><strong>{rows.filter((item) => item.documentsComplete).length}</strong><span className="traveller-metric-caption">Document checks completed</span></div>
+        <div className="traveller-metric traveller-metric-attention"><span className="traveller-metric-label">Needs attention</span><strong>{rows.filter((item) => !item.documentsComplete || item.status === 'Documents Pending').length}</strong><span className="traveller-metric-caption">Missing documents or pending status</span></div>
       </div>
       <div className="traveller-section-heading"><h2>Travelling groups</h2><span className="section-info" title="Groups are organised by their group name within each booking. Travellers without a group name appear as Individual travellers."><Info size={15}/></span></div>
       <TableShell><table><thead><tr><th>Group</th><th>Booking</th><th>Customer / booking owner</th><th>Members</th><th>Documents complete</th><th>Ready / travelling / returned</th><th>Actions</th></tr></thead><tbody>{groupRows.filter((group) => group.travellers.some((traveller) => rows.some((row) => row.id === traveller.id))).map((group) => {
