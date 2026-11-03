@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { todayDate } from '@/lib/business'
-import { appConfig } from '@/config/app'
-import { loadDemoStore, saveDemoStore } from '@/lib/supabaseStore'
+import { loadLiveStore, saveLiveStore } from '@/lib/supabaseStore'
+import type { AppMode } from '@/auth/AuthGate'
 import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, initialSupplierPayments, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
@@ -36,23 +36,24 @@ const packageAvailabilityStatus = (status: TravelPackage['status'], availability
   availability <= 0 && status === 'Active' ? 'Fully Booked' : availability > 0 && status === 'Fully Booked' ? 'Active' : status
 const bookingReservesPlaces = (status: Booking['status']) => !['Enquiry', 'Cancelled'].includes(status)
 
-export function AppStoreProvider({ children }: { children: ReactNode }) {
-  const [leads, setLeads] = useState<Lead[]>(appConfig.useMockData ? initialLeads : [])
-  const [customers, setCustomers] = useState<Customer[]>(appConfig.useMockData ? initialCustomers : [])
-  const [bookings, setBookings] = useState<Booking[]>(appConfig.useMockData ? initialBookings : [])
-  const [packages, setPackages] = useState<TravelPackage[]>(appConfig.useMockData ? initialPackages : [])
-  const [payments, setPayments] = useState<Payment[]>(appConfig.useMockData ? initialPayments : [])
-  const [travellers, setTravellers] = useState<Traveller[]>(appConfig.useMockData ? initialTravellers : [])
-  const [supplierCosts, setSupplierCosts] = useState<SupplierCost[]>(appConfig.useMockData ? initialSupplierCosts : [])
-  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(appConfig.useMockData ? initialSupplierPayments : [])
-  const [documents, setDocuments] = useState<DocumentRecord[]>(appConfig.useMockData ? initialDocuments : [])
-  const [dataReady, setDataReady] = useState(appConfig.useMockData)
+export function AppStoreProvider({ children, mode }: { children: ReactNode; mode: AppMode }) {
+  const isDemo = mode === 'demo'
+  const [leads, setLeads] = useState<Lead[]>(isDemo ? initialLeads : [])
+  const [customers, setCustomers] = useState<Customer[]>(isDemo ? initialCustomers : [])
+  const [bookings, setBookings] = useState<Booking[]>(isDemo ? initialBookings : [])
+  const [packages, setPackages] = useState<TravelPackage[]>(isDemo ? initialPackages : [])
+  const [payments, setPayments] = useState<Payment[]>(isDemo ? initialPayments : [])
+  const [travellers, setTravellers] = useState<Traveller[]>(isDemo ? initialTravellers : [])
+  const [supplierCosts, setSupplierCosts] = useState<SupplierCost[]>(isDemo ? initialSupplierCosts : [])
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(isDemo ? initialSupplierPayments : [])
+  const [documents, setDocuments] = useState<DocumentRecord[]>(isDemo ? initialDocuments : [])
+  const [dataReady, setDataReady] = useState(isDemo)
   const [dataError, setDataError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (appConfig.useMockData) return
+    if (isDemo) return
     let active = true
-    loadDemoStore().then((data) => {
+    loadLiveStore().then((data) => {
       if (!active) return
       setLeads(data.leads); setCustomers(data.customers); setPackages(data.packages)
       setBookings(data.bookings); setTravellers(data.travellers); setPayments(data.payments)
@@ -62,16 +63,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       if (active) { setDataError(error instanceof Error ? error.message : 'Could not load demo records from Supabase.'); setDataReady(true) }
     })
     return () => { active = false }
-  }, [])
+  }, [isDemo])
 
   useEffect(() => {
-    if (appConfig.useMockData || !dataReady || dataError) return
+    if (isDemo || !dataReady || dataError) return
     const timer = window.setTimeout(() => {
-      saveDemoStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
+      saveLiveStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
         .catch((error: unknown) => setDataError(error instanceof Error ? error.message : 'Could not save demo records to Supabase.'))
     }, 500)
     return () => window.clearTimeout(timer)
-  }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError])
+  }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError, isDemo])
   const [action, setAction] = useState<QuickActionType | null>(null)
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
 
@@ -191,7 +192,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }
 
   const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
-  return <StoreContext.Provider value={value}>{!appConfig.useMockData && dataError && <div role="alert" className="data-connection-error">Supabase demo data error: {dataError}</div>}{!appConfig.useMockData && !dataReady && <div className="data-connection-loading" role="status">Loading demonstration records from Supabase…</div>}{children}</StoreContext.Provider>
+  return <StoreContext.Provider value={value}>{!isDemo && dataError && <div role="alert" className="data-connection-error">Live database error: {dataError}</div>}{!isDemo && !dataReady && <div className="data-connection-loading" role="status">Loading agency records…</div>}{children}</StoreContext.Provider>
 }
 
 export const useAppStore = () => {
