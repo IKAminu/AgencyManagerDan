@@ -65,6 +65,7 @@ export interface Booking {
 export interface Traveller {
   id: string
   name: string
+  customerId?: string
   bookingId: string
   nationality: string
   status: 'Not Started' | 'Documents Pending' | 'Documents Complete' | 'Ready for Travel' | 'Departed' | 'Abroad' | 'Returned'
