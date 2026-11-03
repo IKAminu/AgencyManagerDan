@@ -8,9 +8,10 @@ const ALLOWED_EMAILS = new Set([
   'dandurguairtravels@gmail.com',
 ])
 
+export type AppMode = 'demo' | 'live'
 type AuthStep = 'login' | 'mfa' | 'enroll'
 
-function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
+function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Session) => void; onDemo: () => void }) {
   const [step, setStep] = useState<AuthStep>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -132,6 +133,8 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
         <button className="button button-primary auth-submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>}
 
+      {step === 'login' && <button className="button button-secondary auth-demo" type="button" onClick={onDemo}>Sign in as guest · Explore demo</button>}
+
       {step === 'enroll' && <form className="auth-form" onSubmit={handleVerify}>
         <div className="auth-qr"><img src={qrCode} alt="Authenticator setup QR code" /></div>
         <p className="auth-help">Open Google Authenticator, Microsoft Authenticator, 1Password or another TOTP app. Scan this QR code, then enter the six-digit code it generates.</p>
@@ -152,10 +155,11 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
   </div>
 }
 
-export function AuthGate({ children }: { children: ReactNode }) {
+export function AuthGate({ children, onMode }: { children: (mode: AppMode) => ReactNode; onMode: (mode: AppMode) => void }) {
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [mode, setMode] = useState<AppMode | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -182,6 +186,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
   if (!ready) return <div className="auth-loading">Loading secure session…</div>
-  if (!session || !authenticated) return <AuthScreen onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true) }} />
-  return <>{children}</>
+  if (!session || !authenticated) return <AuthScreen onDemo={() => { setMode('demo'); onMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live'); onMode('live') }} />
+  return <>{mode === 'live' ? children('live') : mode === 'demo' ? children('demo') : null}</>
 }
