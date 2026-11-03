@@ -49,13 +49,13 @@ export const initialTravellers: Traveller[] = [
 ]
 
 export const initialPayments: Payment[] = [
-  { id: 'pay1', reference: 'PAY-00482', bookingId: 'b1', customerId: 'c1', amount: 1000000, date: iso(-12), method: 'Bank Transfer', status: 'Confirmed', transactionReference: 'NIP-881204' },
-  { id: 'pay2', reference: 'PAY-00461', bookingId: 'b2', customerId: 'c2', amount: 4000000, date: iso(-28), method: 'Bank Transfer', status: 'Confirmed' },
-  { id: 'pay3', reference: 'PAY-00474', bookingId: 'b2', customerId: 'c2', amount: 2500000, date: iso(-10), method: 'POS', status: 'Confirmed' },
-  { id: 'pay4', reference: 'PAY-00312', bookingId: 'b3', customerId: 'c3', amount: 3000000, date: iso(-138), method: 'Cash', status: 'Confirmed', historical: true },
-  { id: 'pay5', reference: 'PAY-00491', bookingId: 'b4', customerId: 'c4', amount: 1500000, date: iso(-5), method: 'Bank Transfer', status: 'Confirmed' },
-  { id: 'pay6', reference: 'PAY-00492', bookingId: 'b4', customerId: 'c4', amount: 250000, date: iso(-4), method: 'Bank Transfer', status: 'Reversed' },
-  { id: 'pay7', reference: 'PAY-00499', bookingId: 'b5', customerId: 'c5', amount: 2000000, date: iso(-2), method: 'Bank Transfer', status: 'Pending' },
+  { id: 'pay1', reference: 'PAY-00482', bookingId: 'b1', customerId: 'c1', packageId: 'p2', purpose: 'Essential Umrah', amount: 1000000, date: iso(-12), method: 'Bank Transfer', status: 'Confirmed', transactionReference: 'NIP-881204' },
+  { id: 'pay2', reference: 'PAY-00461', bookingId: 'b2', customerId: 'c2', packageId: 'p1', purpose: 'Ramadan Umrah — Last 10 Nights', amount: 4000000, date: iso(-28), method: 'Bank Transfer', status: 'Confirmed' },
+  { id: 'pay3', reference: 'PAY-00474', bookingId: 'b2', customerId: 'c2', packageId: 'p1', purpose: 'Ramadan Umrah — Last 10 Nights', amount: 2500000, date: iso(-10), method: 'POS', status: 'Confirmed' },
+  { id: 'pay4', reference: 'PAY-00312', bookingId: 'b3', customerId: 'c3', purpose: 'Custom Umrah Arrangement', amount: 3000000, date: iso(-138), method: 'Cash', status: 'Confirmed', historical: true },
+  { id: 'pay5', reference: 'PAY-00491', bookingId: 'b4', customerId: 'c4', packageId: 'p2', purpose: 'Essential Umrah', amount: 1500000, date: iso(-5), method: 'Bank Transfer', status: 'Confirmed' },
+  { id: 'pay6', reference: 'PAY-00492', bookingId: 'b4', customerId: 'c4', packageId: 'p2', purpose: 'Essential Umrah', amount: 250000, date: iso(-4), method: 'Bank Transfer', status: 'Reversed' },
+  { id: 'pay7', reference: 'PAY-00499', bookingId: 'b5', customerId: 'c5', packageId: 'p3', purpose: 'Hajj Premium Programme', amount: 2000000, date: iso(-2), method: 'Bank Transfer', status: 'Pending' },
 ]
 
 export const supplierCosts: SupplierCost[] = [
