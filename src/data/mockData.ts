@@ -1,4 +1,4 @@
-import type { Booking, Customer, DocumentRecord, Lead, Payment, SupplierCost, TravelPackage, Traveller } from '@/types'
+import type { Booking, Customer, DocumentRecord, Lead, Payment, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
 const iso = (offset: number) => {
   const date = new Date()
@@ -63,6 +63,11 @@ export const supplierCosts: SupplierCost[] = [
   { id: 'sc2', bookingId: 'b2', supplier: 'Al-Hidayah Travel Services', category: 'Ground package', amount: 5000000, dueDate: iso(-8), paid: 5000000, status: 'Paid' },
   { id: 'sc3', bookingId: 'b4', supplier: 'Rahma Ground Handling', category: 'Accommodation', amount: 2100000, dueDate: iso(-1), paid: 0, status: 'Overdue' },
   { id: 'sc4', bookingId: 'b5', supplier: 'Makkah Hospitality Co.', category: 'Hajj services', amount: 7200000, dueDate: iso(24), paid: 0, status: 'Unpaid' },
+]
+
+export const initialSupplierPayments: SupplierPayment[] = [
+  { id: 'sp1', supplierCostId: 'sc1', amount: 1000000, date: iso(-10), method: 'Bank Transfer', reference: 'SUP-TRF-2104', status: 'Confirmed' },
+  { id: 'sp2', supplierCostId: 'sc2', amount: 5000000, date: iso(-30), method: 'Bank Transfer', reference: 'SUP-TRF-1987', status: 'Confirmed' },
 ]
 
 export const documents: DocumentRecord[] = [
