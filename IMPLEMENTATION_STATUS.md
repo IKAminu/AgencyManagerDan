@@ -14,6 +14,9 @@
 - Payment and supplier transaction forms validate positive finite amounts and required transaction dates; supplier costs also validate their due date and optional booking reference.
 - Supplier disbursement history records confirmed and voided payment records with a required reason; voiding an incorrect or failed record restores the related supplier obligation and recalculates its status.
 - Recording a supplier payment from an individual supplier-cost row preselects that exact cost, reducing the risk of allocating money to the wrong obligation.
+- The demonstration supplier ledger is seeded with sample payment entries that reconcile to the paid totals shown on its supplier costs.
+- Lead conversion carries the latest edited contact details into the lead record and creates a linked customer only when one does not already exist for that lead.
+- Customer payment history labels payment corrections as reversals, while supplier disbursement corrections are labelled as voided records.
 - Traveller overview metrics are presented in responsive summary cards, with supporting descriptions and a distinct attention state.
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
 - Supabase client/service boundary, PWA manifest and GitHub Pages workflow.
