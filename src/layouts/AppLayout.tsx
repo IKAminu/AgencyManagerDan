@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, Users, WalletCards, X } from 'lucide-react'
+import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, ChevronDown, CircleDollarSign, CreditCard, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, UserPlus, Users, WalletCards, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
 import { QuickActionModal } from '@/components/QuickActionModal'
 import { daysFromToday, supplierOutstanding } from '@/lib/business'
+
+const primaryQuickActions = [
+  { type: 'lead' as const, label: 'Add lead', icon: UserPlus },
+  { type: 'customer' as const, label: 'Add customer', icon: Users },
+  { type: 'booking' as const, label: 'Create booking', icon: CalendarCheck },
+  { type: 'payment' as const, label: 'Record payment', icon: CreditCard },
+]
 
 const groups = [
   { label: 'Overview', links: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }] },
@@ -20,10 +27,12 @@ export function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
   const [accountEmail, setAccountEmail] = useState('')
   const [accountName, setAccountName] = useState('')
   const notificationRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
+  const quickActionsRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const { mode, saveNotice, leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
@@ -49,10 +58,12 @@ export function AppLayout() {
       const target = event.target as Node
       if (!notificationRef.current?.contains(target)) setNotificationsOpen(false)
       if (!accountRef.current?.contains(target)) setAccountOpen(false)
+      if (!quickActionsRef.current?.contains(target)) setQuickActionsOpen(false)
     }
     const closeOnScroll = () => {
       setNotificationsOpen(false)
       setAccountOpen(false)
+      setQuickActionsOpen(false)
     }
     document.addEventListener('pointerdown', closeOnOutsideClick)
     document.addEventListener('scroll', closeOnScroll, true)
@@ -67,6 +78,7 @@ export function AppLayout() {
         setSearchOpen(false)
         setNotificationsOpen(false)
         setAccountOpen(false)
+        setQuickActionsOpen(false)
         setMenuOpen(false)
       }
     }
@@ -114,7 +126,7 @@ export function AppLayout() {
         </div>
         <div className="top-actions">
           <div className="popover-wrap" ref={notificationRef}><IconButton label={alerts.length ? `View ${alerts.length} notifications` : 'No current notifications'} aria-expanded={notificationsOpen} onClick={() => { setNotificationsOpen((open) => !open); setAccountOpen(false) }}><Bell size={19} />{alerts.length > 0 && <span className="notification-dot" />}</IconButton>{notificationsOpen && <div className="notifications"><div><strong>Current alerts</strong><span>{alerts.length} items · Based on current records</span></div>{alerts.length ? alerts.map((alert, index) => <button key={`${alert.path}-${index}`} onClick={() => { navigate(alert.path); setNotificationsOpen(false) }}><strong>{alert.title}</strong><span>{alert.detail}</span></button>) : <p className="notification-empty">Nothing needs attention right now.</p>}</div>}</div>
-          <Button className="quick-button" onClick={() => setAction('lead')}><Plus size={17} /> Quick action <ChevronDown size={15} /></Button>
+          <div className="quick-action-wrap" ref={quickActionsRef}><Button className="quick-button" aria-expanded={quickActionsOpen} onClick={() => { setQuickActionsOpen((open) => !open); setNotificationsOpen(false); setAccountOpen(false) }}><Plus size={17} /> Quick action <ChevronDown size={15} /></Button>{quickActionsOpen && <div className="quick-action-menu" role="menu" aria-label="Quick actions">{primaryQuickActions.map(({ type, label, icon: Icon }) => <button key={type} type="button" role="menuitem" onClick={() => { setAction(type); setQuickActionsOpen(false) }}><Icon size={17} /><span>{label}</span></button>)}</div>}</div>
           <div className="account-wrap" ref={accountRef}>
             <button className="account-trigger" type="button" aria-label="Open account centre" aria-expanded={accountOpen} onClick={() => { setAccountOpen((open) => !open); setNotificationsOpen(false) }}>
               {(accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('') || accountEmail.slice(0, 2) || 'DU').toUpperCase()}
@@ -131,7 +143,7 @@ export function AppLayout() {
       </header>
       <main><Outlet /></main>
     </div>
-    <button className="mobile-fab" aria-label="Add lead" onClick={() => setAction('lead')}><Plus size={22} /></button>
+    <div className={`mobile-quick-actions ${quickActionsOpen ? 'is-open' : ''}`} ref={quickActionsRef}><div className="mobile-quick-menu" aria-hidden={!quickActionsOpen}>{primaryQuickActions.map(({ type, label, icon: Icon }, index) => <button className={`mobile-quick-option mobile-quick-option-${index + 1}`} key={type} type="button" tabIndex={quickActionsOpen ? 0 : -1} onClick={() => { setAction(type); setQuickActionsOpen(false) }}><Icon size={17} /><span>{label}</span></button>)}</div><button className="mobile-fab" aria-label={quickActionsOpen ? "Close quick actions" : "Open quick actions"} aria-expanded={quickActionsOpen} onClick={() => setQuickActionsOpen((open) => !open)}><Plus size={22} /></button></div>
     <QuickActionModal />
   </div>
 }
