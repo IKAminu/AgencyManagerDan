@@ -20,6 +20,9 @@ export function QuickActionModal() {
   const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
+  const [paymentCustomerChoice, setPaymentCustomerChoice] = useState('')
+  const [paymentBookingId, setPaymentBookingId] = useState('')
+  const [paymentPackageId, setPaymentPackageId] = useState('')
   if (!action) return null
 
   const current = editing?.type === action ? ({
@@ -34,7 +37,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setPaymentCustomerChoice(''); setPaymentBookingId(''); setPaymentPackageId('') }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : fallback
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -45,17 +48,19 @@ export function QuickActionModal() {
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
     if (action === 'payment' && !isEditing) {
-      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1))
+      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1)) || customers.find((customer) => customer.id === paymentCustomerChoice)
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
       if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
       if (!selectedCustomer && values.bookingId) return setError("A new customer cannot be linked to an existing customer's booking. Create their booking separately first.")
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
       if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
+      if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId) && payments.filter((payment) => payment.bookingId === values.bookingId && payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0) + Number(values.amount) > (bookings.find((booking) => booking.id === values.bookingId)?.agreedPrice ?? 0)) return setError('This payment exceeds the booking balance. Check the existing payments or adjust the amount.')
     }
     if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
     if (action === 'supplier-cost' && isEditing && Number(values.amount) < (supplierCosts.find((cost) => cost.id === editing?.id)?.paid ?? 0)) return setError('Supplier cost cannot be reduced below the amount already paid.')
     if (action === 'supplier-payment' && Number(values.amount) <= 0) return setError('Payment amount must be greater than zero.')
+    if (action === 'supplier-payment' && !supplierCosts.some((cost) => cost.id === values.supplierCostId && cost.paid < cost.amount)) return setError('Select a supplier cost with an outstanding balance.')
     if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
     if (action === 'package' && Number(values.price) <= 0) return setError('Package selling price must be greater than zero.')
     if (action === 'package' && Number(values.estimatedCost || 0) > Number(values.price)) return setError('Estimated cost cannot exceed the selling price.')
