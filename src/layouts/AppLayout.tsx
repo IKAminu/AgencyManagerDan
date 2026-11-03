@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, Users, WalletCards, X } from 'lucide-react'
+import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, ChevronDown, CircleDollarSign, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, Users, WalletCards, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
@@ -26,7 +26,7 @@ export function AppLayout() {
   const accountRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
-  const { mode, leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
+  const { mode, saveNotice, leads, customers, bookings, travellers, supplierCosts, setAction } = useAppStore()
 
   useEffect(() => {
     let active = true
@@ -97,6 +97,7 @@ export function AppLayout() {
   }, [query, leads, customers, bookings, travellers])
 
   return <div className="app-shell">
+    {saveNotice && <div className={`save-toast ${saveNotice.includes('Could not') ? 'save-toast-error' : ''}`} role="status" aria-live="polite">{saveNotice.includes('Updating') || saveNotice.includes('Saving') ? <LoaderCircle size={16} className="toast-spinner" /> : <CheckCircle2 size={16} />}<span>{saveNotice}</span></div>}
     <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><img className="brand-logo" src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" /><div className="brand-name"><strong>Dandurgu</strong><span>Headquarters</span></div><IconButton label="Close navigation" className="mobile-close" onClick={() => setMenuOpen(false)}><X size={18} /></IconButton></div>
       <nav>{groups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} /><span>{label}</span></NavLink>)}</div>)}</nav>
