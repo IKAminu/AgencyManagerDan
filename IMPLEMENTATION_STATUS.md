@@ -11,6 +11,8 @@
 - Traveller operations include booking-specific family/group summaries, member counts, document-readiness totals and individual travel statuses. Each traveller retains their own name independently of an optional linked customer profile.
 - Traveller document readiness is tracked separately from travel status.
 - Payment confirmation validates the booking's remaining balance, including when confirming a previously pending payment.
+- Payment and supplier transaction forms validate positive finite amounts and required transaction dates; supplier costs also validate their due date and optional booking reference.
+- Traveller overview metrics are presented in responsive summary cards, with supporting descriptions and a distinct attention state.
 - Package price snapshots, confirmed/reversed payment rules and separate supplier obligations.
 - Supabase client/service boundary, PWA manifest and GitHub Pages workflow.
 
