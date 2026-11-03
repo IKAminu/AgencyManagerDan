@@ -106,13 +106,51 @@ export function BookingsPage() {
 export function TravellersPage() {
   const controls = useFilter()
   const { travellers, bookings, customers, setAction, setEditing } = useAppStore()
-  const rows = travellers.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.name} ${item.group}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Travellers & operations" description="Coordinate traveller readiness, group relationships, departures and returns." actionLabel="Add traveller" actionType="traveller" options={['Not Started', 'Documents Pending', 'Documents Complete', 'Ready for Travel', 'Abroad', 'Returned']} {...controls}><TableShell><table><thead><tr><th>Traveller</th><th>Customer profile</th><th>Booking</th><th>Travel group</th><th>Departure</th><th>Expected return</th><th>Documents</th><th>Travel status</th><th>Actions</th></tr></thead><tbody>{rows.map((traveller) => {
-    const booking = bookings.find((item) => item.id === traveller.bookingId)!
-    return <tr key={traveller.id}><td><strong>{traveller.name}</strong><span className="cell-sub">{traveller.nationality}</span></td><td>{traveller.customerId ? customers.find((customer) => customer.id === traveller.customerId)?.reference || 'Customer unavailable' : 'Traveller only'}</td><td>{booking?.reference}</td><td>{traveller.group ? <span className="group-label">{traveller.group}</span> : '—'}</td><td>{shortDate(booking.departureDate)}</td><td>{shortDate(booking.returnDate)}</td><td>{traveller.documentsComplete ? 'Complete' : 'Needs attention'}</td><td><Badge>{traveller.status}</Badge></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'traveller', id: traveller.id }); setAction('traveller') }}><Pencil size={14} /> Edit</Button></td></tr>
-  })}</tbody></table></TableShell><p className="info-note"><Info size={16} /> Passport numbers are intentionally excluded from tables and global search. View them only in a secured traveller detail record after Supabase authentication is connected.</p></Module>
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
+  const groupRows = useMemo(() => {
+    const groups = new Map<string, { bookingId: string; group: string; travellers: typeof travellers }>()
+    for (const traveller of travellers) {
+      const key = traveller.group?.trim() || `Individual · ${traveller.bookingId}`
+      const existing = groups.get(key)
+      if (existing) existing.travellers.push(traveller)
+      else groups.set(key, { bookingId: traveller.bookingId, group: key, travellers: [traveller] })
+    }
+    return Array.from(groups.values())
+  }, [travellers])
+  const rows = travellers.filter((item) => {
+    const booking = bookings.find((entry) => entry.id === item.bookingId)
+    return (!controls.filter || item.status === controls.filter) && `${item.name} ${item.group || ''} ${booking?.reference || ''} ${booking?.packageName || ''}`.toLowerCase().includes(controls.query.toLowerCase())
+  })
+  const selected = groupRows.find((group) => group.group === selectedGroup)
+  return <>
+    <Module title="Travellers & operations" description="Track each traveller separately, while managing family and group readiness by booking." actionLabel="Add traveller" actionType="traveller" options={['Not Started', 'Documents Pending', 'Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned']} {...controls}>
+      <div className="summary-strip">
+        <div><span>Travellers shown</span><strong>{rows.length}</strong></div>
+        <div><span>Ready for travel</span><strong>{rows.filter((item) => item.status === 'Ready for Travel' || item.status === 'Departed' || item.status === 'Abroad' || item.status === 'Returned').length}</strong></div>
+        <div><span>Documents complete</span><strong>{rows.filter((item) => item.documentsComplete).length}</strong></div>
+        <div><span>Needs attention</span><strong>{rows.filter((item) => !item.documentsComplete || item.status === 'Documents Pending').length}</strong></div>
+      </div>
+      <div className="section-heading"><div><h2>Travelling groups</h2><p>Groups are identified by their group name. Travellers without a group name are listed individually by booking.</p></div></div>
+      <TableShell><table><thead><tr><th>Group</th><th>Booking</th><th>Customer / booking owner</th><th>Members</th><th>Documents complete</th><th>Ready / travelling / returned</th><th>Actions</th></tr></thead><tbody>{groupRows.filter((group) => group.travellers.some((traveller) => rows.some((row) => row.id === traveller.id))).map((group) => {
+        const booking = bookings.find((item) => item.id === group.bookingId)
+        const ready = group.travellers.filter((item) => ['Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(item.status)).length
+        const docs = group.travellers.filter((item) => item.documentsComplete).length
+        return <tr key={group.group}><td><strong>{group.group.startsWith('Individual ·') ? 'Individual travellers' : group.group}</strong></td><td>{booking?.reference || 'Booking unavailable'}<span className="cell-sub">{booking?.packageName}</span></td><td>{customers.find((item) => item.id === booking?.customerId)?.name || 'Customer unavailable'}</td><td>{group.travellers.length}</td><td>{docs}/{group.travellers.length}</td><td>{ready}/{group.travellers.length}</td><td><Button variant="secondary" onClick={() => setSelectedGroup(group.group)}><Eye size={14}/> View group</Button></td></tr>
+      })}</tbody></table></TableShell>
+      <div className="section-heading"><div><h2>Individual traveller records</h2><p>Document readiness and travel status are tracked separately.</p></div></div>
+      <TableShell><table><thead><tr><th>Traveller</th><th>Customer profile</th><th>Booking</th><th>Group</th><th>Departure</th><th>Expected return</th><th>Documents</th><th>Travel status</th><th>Actions</th></tr></thead><tbody>{rows.map((traveller) => {
+        const booking = bookings.find((item) => item.id === traveller.bookingId)
+        return <tr key={traveller.id}><td><strong>{traveller.name}</strong><span className="cell-sub">{traveller.nationality}</span></td><td>{traveller.customerId ? customers.find((customer) => customer.id === traveller.customerId)?.reference || 'Customer unavailable' : 'Traveller only'}</td><td>{booking?.reference || 'Booking unavailable'}</td><td>{traveller.group || 'Individual'}</td><td>{booking ? shortDate(booking.departureDate) : '—'}</td><td>{booking ? shortDate(booking.returnDate) : '—'}</td><td>{traveller.documentsComplete ? <Badge>Complete</Badge> : <Badge>Pending</Badge>}</td><td><Badge>{traveller.status}</Badge></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'traveller', id: traveller.id }); setAction('traveller') }}><Pencil size={14} /> Edit</Button></td></tr>
+      })}</tbody></table>{!rows.length && <EmptyState title="No travellers found" text="Adjust the search or filter, or add a traveller to an existing booking."/>}</TableShell>
+      <p className="info-note"><Info size={16}/> Passport numbers are intentionally excluded from tables and global search. View them only in a secured traveller detail record after Supabase authentication is connected.</p>
+    </Module>
+    {selected && <Modal title={selected.group} description={`${selected.travellers.length} traveller(s) · ${bookings.find((item) => item.id === selected.bookingId)?.reference || 'Booking unavailable'}`} onClose={() => setSelectedGroup(null)}>
+      <div className="detail-grid"><div><span>Booking owner</span><strong>{customers.find((item) => item.id === bookings.find((booking) => booking.id === selected.bookingId)?.customerId)?.name || 'Customer unavailable'}</strong></div><div><span>Total members</span><strong>{selected.travellers.length}</strong></div><div><span>Documents complete</span><strong>{selected.travellers.filter((item) => item.documentsComplete).length} / {selected.travellers.length}</strong></div><div><span>Ready / travelling / returned</span><strong>{selected.travellers.filter((item) => ['Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(item.status)).length} / {selected.travellers.length}</strong></div></div>
+      <TableShell><table><thead><tr><th>Traveller</th><th>Documents</th><th>Status</th><th></th></tr></thead><tbody>{selected.travellers.map((traveller) => <tr key={traveller.id}><td>{traveller.name}</td><td>{traveller.documentsComplete ? 'Complete' : 'Pending'}</td><td><Badge>{traveller.status}</Badge></td><td><Button variant="secondary" onClick={() => { setEditing({ type: 'traveller', id: traveller.id }); setAction('traveller'); setSelectedGroup(null) }}><Pencil size={14}/> Edit</Button></td></tr>)}</tbody></table></TableShell>
+      <div className="form-actions"><Button onClick={() => { setAction('traveller'); setSelectedGroup(null) }}>Add another traveller</Button><Button variant="secondary" onClick={() => setSelectedGroup(null)}>Close</Button></div>
+    </Modal>}
+  </>
 }
-
 export function PaymentsPage() {
   const controls = useFilter()
   const { payments, bookings, customers, setAction, setEditing, reversePayment } = useAppStore()
