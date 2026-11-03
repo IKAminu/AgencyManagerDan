@@ -56,7 +56,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: reference('CUS'), name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') setBookings((items) => [{ id: id(), reference: `BKG-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status: (values.status || 'Pending Confirmation') as Booking['status'] }, ...items])
     if (type === 'payment') {
-      let customer = customers.find((item) => item.reference === values.customerReference)
+      let customer = customers.find((item) => item.reference === values.customerName?.split(' — ').at(-1))
       if (!customer && values.customerName?.trim()) {
         customer = { id: id(), reference: reference('CUS'), name: values.customerName.trim(), phone: values.customerPhone.trim(), email: values.customerEmail.trim() || undefined, nationality: values.customerNationality || 'Nigerian', createdAt: today() }
         setCustomers((items) => [customer!, ...items])
