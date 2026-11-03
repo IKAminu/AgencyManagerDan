@@ -10,10 +10,12 @@ const details: Record<QuickActionType, { title: string; description: string }> =
   payment: { title: 'Record payment', description: 'Only confirmed payments reduce the calculated outstanding balance.' },
   traveller: { title: 'Add traveller', description: 'Add an individual traveller to an existing booking.' },
   package: { title: 'Create package', description: 'Add a package to the internal demonstration catalogue.' },
+  'supplier-cost': { title: 'Record supplier cost', description: 'Record an amount owed to a supplier for a booking.' },
+  'supplier-payment': { title: 'Record supplier payment', description: 'Record money paid against an existing supplier cost.' },
 }
 
 export function QuickActionModal() {
-  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers } = useAppStore()
+  const { action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts } = useAppStore()
   const [error, setError] = useState('')
   if (!action) return null
 
@@ -24,6 +26,8 @@ export function QuickActionModal() {
     payment: payments.find((item) => item.id === editing.id),
     traveller: travellers.find((item) => item.id === editing.id),
     package: packages.find((item) => item.id === editing.id),
+    'supplier-cost': supplierCosts.find((item) => item.id === editing.id),
+    'supplier-payment': undefined,
   }[action]) : undefined
   const isEditing = Boolean(current)
   const close = () => { setAction(null); setEditing(null); setError('') }
@@ -36,6 +40,9 @@ export function QuickActionModal() {
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
+    if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
+    if (action === 'supplier-payment' && Number(values.amount) <= 0) return setError('Payment amount must be greater than zero.')
+    if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
     if (action === 'package' && Number(values.price) <= 0) return setError('Package selling price must be greater than zero.')
     if (action === 'package' && Number(values.estimatedCost || 0) > Number(values.price)) return setError('Estimated cost cannot exceed the selling price.')
     if (isEditing && editing) updateRecord(action, editing.id, values)
@@ -76,6 +83,20 @@ export function QuickActionModal() {
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Confirmed')}><option>Pending</option><option>Confirmed</option><option>Reversed</option><option>Failed</option></Select></Field>
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
+      </>}
+      {action === 'supplier-cost' && <>
+        <Field label="Booking"><Select name="bookingId" required>{bookings.map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {booking.packageName}</option>)}</Select></Field>
+        <Field label="Supplier"><Input name="supplier" required /></Field>
+        <Field label="Cost description"><Input name="category" placeholder="e.g. Accommodation, flights, visa" required /></Field>
+        <Field label="Total cost (NGN)"><Input name="amount" type="number" min="1" required /></Field>
+        <Field label="Payment due date"><Input name="dueDate" type="date" required /></Field>
+      </>}
+      {action === 'supplier-payment' && <>
+        <Field label="Supplier cost"><Select name="supplierCostId" required>{supplierCosts.filter((cost) => cost.paid < cost.amount).map((cost) => <option key={cost.id} value={cost.id}>{cost.supplier} · {cost.category} · Outstanding ₦{(cost.amount-cost.paid).toLocaleString('en-NG')}</option>)}</Select></Field>
+        <Field label="Amount paid (NGN)"><Input name="amount" type="number" min="1" required /></Field>
+        <Field label="Payment date"><Input name="date" type="date" required /></Field>
+        <Field label="Payment method"><Select name="method"><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
+        <Field label="Transaction reference (optional)"><Input name="reference" /></Field>
       </>}
       {action === 'package' && <>
         <Field label="Package code"><Input name="code" defaultValue={value('code')} required /></Field>
