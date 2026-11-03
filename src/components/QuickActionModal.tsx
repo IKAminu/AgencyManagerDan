@@ -50,6 +50,14 @@ export function QuickActionModal() {
     if (action === 'lead' && values.followUp && !Number.isFinite(Date.parse(values.followUp))) return setError('Enter a valid follow-up date.')
     if (action === 'booking' && !isEditing && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer for this booking.')
     if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId && item.status === 'Active' && item.availability >= Number(values.partySize))) return setError('The selected package does not have enough available places for this travelling party.')
+    if (action === 'booking' && isEditing && current && 'packageId' in current && current.packageId) {
+      const existing = current as typeof current & { status: 'Enquiry' | 'Pending Confirmation' | 'Confirmed' | 'In Preparation' | 'Ready for Travel' | 'Travelling' | 'Completed' | 'Cancelled'; partySize?: number }
+      const selectedPackage = packages.find((item) => item.id === existing.packageId)
+      const oldReserved = !['Enquiry', 'Cancelled'].includes(existing.status) ? (existing.partySize || 1) : 0
+      const nextReserved = !['Enquiry', 'Cancelled'].includes(values.status as typeof existing.status) ? Number(values.partySize) : 0
+      const additionalPlaces = nextReserved - oldReserved
+      if (selectedPackage && additionalPlaces > 0 && (selectedPackage.status !== 'Active' || selectedPackage.availability < additionalPlaces)) return setError('There are not enough remaining places to make this booking change.')
+    }
     if (action === 'payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Amount must be a valid number greater than zero.')
     if (action === 'payment' && (!values.date || !Number.isFinite(Date.parse(values.date)))) return setError('Enter a valid date the payment was received.')
     if (action === 'payment' && !isEditing) {
