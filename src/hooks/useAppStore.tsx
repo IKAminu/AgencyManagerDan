@@ -1,12 +1,14 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { todayDate } from '@/lib/business'
 import { loadLiveStore, saveLiveStore } from '@/lib/supabaseStore'
+import { supabase } from '@/lib/supabase'
 import type { AppMode } from '@/auth/AuthGate'
 import { initialBookings, initialCustomers, initialLeads, initialPackages, initialPayments, initialTravellers, initialSupplierPayments, supplierCosts as initialSupplierCosts, documents as initialDocuments } from '@/data/mockData'
 import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType, SupplierCost, SupplierPayment, TravelPackage, Traveller } from '@/types'
 
 type AppStore = {
   mode: AppMode
+  saveNotice: string | null
   leads: Lead[]
   customers: Customer[]
   bookings: Booking[]
@@ -50,6 +52,16 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
   const [documents, setDocuments] = useState<DocumentRecord[]>(isDemo ? initialDocuments : [])
   const [dataReady, setDataReady] = useState(isDemo)
   const [dataError, setDataError] = useState<string | null>(null)
+  const [saveNotice, setSaveNotice] = useState<string | null>(null)
+  const skipNextSave = useRef(false)
+  const noticeTimer = useRef<number | undefined>(undefined)
+  const showNotice = (message: string) => {
+    setSaveNotice(message)
+    if (noticeTimer.current) window.clearTimeout(noticeTimer.current)
+    if (message !== 'Updating records…' && message !== 'Saving changes…') {
+      noticeTimer.current = window.setTimeout(() => setSaveNotice(null), 2600)
+    }
+  }
 
   useEffect(() => {
     if (isDemo) return
@@ -58,6 +70,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setDataError(null)
     loadLiveStore().then((data) => {
       if (!active) return
+      skipNextSave.current = true
       setLeads(data.leads); setCustomers(data.customers); setPackages(data.packages)
       setBookings(data.bookings); setTravellers(data.travellers); setPayments(data.payments)
       setSupplierCosts(data.supplierCosts); setSupplierPayments(data.supplierPayments); setDocuments(data.documents)
@@ -70,12 +83,52 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
 
   useEffect(() => {
     if (isDemo || !dataReady || dataError) return
-    const timer = window.setTimeout(() => {
-      saveLiveStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
-        .catch((error: unknown) => setDataError(error instanceof Error ? error.message : 'Could not save agency records to Supabase.'))
+    if (skipNextSave.current) { skipNextSave.current = false; return }
+    const timer = window.setTimeout(async () => {
+      showNotice('Saving changes…')
+      try {
+        await saveLiveStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
+        showNotice('Record saved')
+      } catch (error) {
+        setDataError(error instanceof Error ? error.message : 'Could not save agency records to Supabase.')
+        showNotice('Could not save record')
+      }
     }, 500)
     return () => window.clearTimeout(timer)
   }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError, isDemo])
+
+  useEffect(() => {
+    if (isDemo || !dataReady || dataError || !supabase) return
+    let active = true
+    let refreshTimer: number | undefined
+    const tables = ['leads', 'customers', 'packages', 'bookings', 'travellers', 'payments', 'supplier_costs', 'supplier_payments', 'documents']
+    let channel = supabase.channel('agency-record-updates')
+    for (const table of tables) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+        if (refreshTimer) window.clearTimeout(refreshTimer)
+        showNotice('Updating records…')
+        refreshTimer = window.setTimeout(async () => {
+          try {
+            const data = await loadLiveStore()
+            if (!active) return
+            skipNextSave.current = true
+            setLeads(data.leads); setCustomers(data.customers); setPackages(data.packages)
+            setBookings(data.bookings); setTravellers(data.travellers); setPayments(data.payments)
+            setSupplierCosts(data.supplierCosts); setSupplierPayments(data.supplierPayments); setDocuments(data.documents)
+            showNotice('Records updated')
+          } catch {
+            if (active) showNotice('Could not refresh records')
+          }
+        }, 350)
+      })
+    }
+    channel.subscribe()
+    return () => {
+      active = false
+      if (refreshTimer) window.clearTimeout(refreshTimer)
+      void supabase.removeChannel(channel)
+    }
+  }, [isDemo, dataReady, dataError])
   const [action, setAction] = useState<QuickActionType | null>(null)
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
 
@@ -194,7 +247,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
+  const value = useMemo(() => ({ mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
   return <StoreContext.Provider value={value}>{!isDemo && dataError ? <div role="alert" className="data-connection-error">Live database error: {dataError}. The workspace has been paused so that changes cannot overwrite records that failed to load.</div> : !isDemo && !dataReady ? <div className="workspace-loading" role="status"><div className="workspace-loader"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span /><span /><span /></div><strong>Preparing your workspace</strong><p>Loading agency records securely…</p></div> : children}</StoreContext.Provider>
 }
 
