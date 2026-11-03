@@ -26,8 +26,9 @@
 @layer components {
   .app-shell { min-height: 100vh; display: flex; }
   .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; width: 16rem; flex-direction: column; border-right: 1px solid var(--color-line); background: var(--color-surface); }
-  .brand { display: flex; height: 4.5rem; align-items: center; gap: .75rem; border-bottom: 1px solid var(--color-line); padding: 0 1.25rem; }
-  .brand-mark { display: grid; height: 2.25rem; width: 2.25rem; place-items: center; border-radius: .55rem; background: var(--color-brand-500); color: white; font-weight: 750; }
+  .brand { display: flex; min-height: 4.5rem; align-items: center; gap: .75rem; border-bottom: 1px solid var(--color-line); padding: .65rem 1.25rem; }
+  .brand-logo { display: block; width: 2.65rem; height: 2.65rem; flex: 0 0 2.65rem; object-fit: contain; }
+  .brand-name { min-width: 0; }
   .brand strong, .brand span { display: block; line-height: 1.15; }
   .brand strong { font-size: .92rem; letter-spacing: -.01em; }
   .brand span { margin-top: .18rem; color: var(--color-muted); font-size: .72rem; }
