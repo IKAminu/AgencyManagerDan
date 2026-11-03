@@ -19,6 +19,7 @@ type AppStore = {
   setEditing: (value: { type: QuickActionType; id: string } | null) => void
   updateRecord: (type: QuickActionType, recordId: string, values: Record<string, string>) => void
   convertLead: (leadId: string, values?: Record<string, string>) => void
+  reversePayment: (paymentId: string, reason: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
@@ -93,6 +94,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setLeads((items) => items.map((item) => item.id === leadId ? { ...item, status: 'Converted' } : item))
   }
 
+  const reversePayment = (paymentId: string, reason: string) => {
+    if (!reason.trim()) return
+    setPayments((items) => items.map((payment) => payment.id === paymentId && payment.status === 'Confirmed' ? { ...payment, status: 'Reversed', reversalReason: reason.trim() } : payment))
+  }
+
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
     if (type === 'document') setDocuments((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, status: values.status as DocumentRecord['status'] } : item))
     if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => item.id === recordId ? { ...item, supplier: values.supplier, category: values.category, amount: Math.max(Number(values.amount), item.paid), dueDate: values.dueDate, status: item.paid >= Number(values.amount) ? 'Paid' : item.paid > 0 ? 'Partially Paid' : 'Unpaid' } : item))
@@ -101,12 +107,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (type === 'lead' && values.status !== 'Converted') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
     if (type === 'customer') setCustomers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, nationality: values.nationality, city: values.city || undefined, historical: values.historical === 'true', notes: values.notes || undefined } : item))
     if (type === 'booking') setBookings((items) => items.map((item) => item.id === recordId ? { ...item, packageName: values.packageName, agreedPrice: Number(values.agreedPrice), departureDate: values.departureDate, returnDate: values.returnDate, status: values.status as Booking['status'] } : item))
-    if (type === 'payment') setPayments((items) => items.map((item) => item.id === recordId ? { ...item, amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: values.status as Payment['status'], transactionReference: values.transactionReference || undefined } : item))
+    if (type === 'payment') setPayments((items) => items.map((item) => item.id === recordId ? { ...item, amount: Number(values.amount), date: values.date, method: values.method as Payment['method'], status: item.status === 'Pending' ? (values.status as Payment['status']) : item.status, transactionReference: values.transactionReference || undefined } : item))
     if (type === 'traveller') setTravellers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, nationality: values.nationality, group: values.group || undefined, status: values.status as Traveller['status'], documentsComplete: values.status === 'Documents Complete' || values.status === 'Ready for Travel' || values.status === 'Departed' || values.status === 'Abroad' || values.status === 'Returned' } : item))
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
+  const value = useMemo(() => ({ leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment }), [leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
