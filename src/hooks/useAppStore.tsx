@@ -193,7 +193,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
   }
 
   const value = useMemo(() => ({ mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
-  return <StoreContext.Provider value={value}>{!isDemo && dataError && <div role="alert" className="data-connection-error">Live database error: {dataError}</div>}{!isDemo && !dataReady && <div className="data-connection-loading" role="status">Loading agency records…</div>}{children}</StoreContext.Provider>
+  return <StoreContext.Provider value={value}>{!isDemo && dataError ? <div role="alert" className="data-connection-error">Live database error: {dataError}. The workspace has been paused so that changes cannot overwrite records that failed to load.</div> : !isDemo && !dataReady ? <div className="data-connection-loading" role="status">Loading agency records…</div> : children}</StoreContext.Provider>
 }
 
 export const useAppStore = () => {
