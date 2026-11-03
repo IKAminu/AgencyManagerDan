@@ -61,7 +61,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
       setSupplierCosts(data.supplierCosts); setSupplierPayments(data.supplierPayments); setDocuments(data.documents)
       setDataReady(true)
     }).catch((error: unknown) => {
-      if (active) { setDataError(error instanceof Error ? error.message : 'Could not load demo records from Supabase.'); setDataReady(true) }
+      if (active) { setDataError(error instanceof Error ? error.message : 'Could not load agency records from the live database.'); setDataReady(true) }
     })
     return () => { active = false }
   }, [isDemo])
@@ -70,7 +70,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     if (isDemo || !dataReady || dataError) return
     const timer = window.setTimeout(() => {
       saveLiveStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
-        .catch((error: unknown) => setDataError(error instanceof Error ? error.message : 'Could not save demo records to Supabase.'))
+        .catch((error: unknown) => setDataError(error instanceof Error ? error.message : 'Could not save agency records to the live database.'))
     }, 500)
     return () => window.clearTimeout(timer)
   }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError, isDemo])
