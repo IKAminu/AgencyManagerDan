@@ -76,8 +76,10 @@ export interface Traveller {
 export interface Payment {
   id: string
   reference: string
-  bookingId: string
+  bookingId?: string
   customerId: string
+  packageId?: string
+  purpose: string
   amount: number
   date: string
   method: 'Bank Transfer' | 'Cash' | 'POS' | 'Other'
