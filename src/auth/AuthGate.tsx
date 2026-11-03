@@ -37,11 +37,13 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
 
     const unverifiedFactors = factors.totp.filter((factor) => factor.status !== 'verified')
     for (const factor of unverifiedFactors) {
-      await supabase!.auth.mfa.unenroll({ factorId: factor.id })
+      const { error: removeError } = await supabase!.auth.mfa.unenroll({ factorId: factor.id })
+      if (removeError) throw new Error(`An unfinished authenticator setup could not be reset: ${removeError.message}. Please contact the app administrator.`)
     }
 
     const { data: enrollment, error: enrollmentError } = await supabase!.auth.mfa.enroll({
       factorType: 'totp',
+      friendlyName: 'Dandurgu HQ Authenticator',
       issuer: 'Dandurgu Headquarters',
     })
     if (enrollmentError) throw enrollmentError
@@ -97,10 +99,20 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
   }
 
   const handleBackToLogin = async () => {
+    if (factorId && step === 'enroll') {
+      const { error: removeError } = await supabase!.auth.mfa.unenroll({ factorId })
+      if (removeError) {
+        setError(`Could not cancel authenticator setup: ${removeError.message}`)
+        return
+      }
+    }
     await supabase!.auth.signOut()
     setStep('login')
     setPassword('')
     setCode('')
+    setFactorId('')
+    setChallengeId('')
+    setQrCode('')
     setError('')
   }
 
@@ -121,7 +133,7 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (session: Session) =
       </form>}
 
       {step === 'enroll' && <form className="auth-form" onSubmit={handleVerify}>
-        <div className="auth-qr"><img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrCode)}`} alt="Authenticator setup QR code" /></div>
+        <div className="auth-qr"><img src={qrCode} alt="Authenticator setup QR code" /></div>
         <p className="auth-help">Open Google Authenticator, Microsoft Authenticator, 1Password or another TOTP app. Scan this QR code, then enter the six-digit code it generates.</p>
         <label className="field-group">Authenticator code<input className="field auth-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={code} onChange={(event) => setCode(event.target.value)} placeholder="000000" /></label>
         {error && <p className="auth-error" role="alert">{error}</p>}
