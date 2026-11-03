@@ -49,7 +49,9 @@ export function QuickActionModal() {
     if (action === 'booking' && values.packageId && !packages.some((item) => item.id === values.packageId)) return setError('Select a valid package.')
     if (action === 'payment' && Number(values.amount) <= 0) return setError('Amount must be greater than zero.')
     if (action === 'payment' && !isEditing) {
-      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1))
+      const enteredName = values.customerName.split(' — ')[0].trim().toLocaleLowerCase()
+      const matchingCustomers = customers.filter((customer) => customer.name.trim().toLocaleLowerCase() === enteredName)
+      const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1)) || (matchingCustomers.length === 1 ? matchingCustomers[0] : undefined)
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
       if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
@@ -57,6 +59,11 @@ export function QuickActionModal() {
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
       if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId) && payments.filter((payment) => payment.bookingId === values.bookingId && payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0) + Number(values.amount) > (bookings.find((booking) => booking.id === values.bookingId)?.agreedPrice ?? 0)) return setError('This payment exceeds the booking balance. Check the existing payments or adjust the amount.')
+    }
+    if (action === 'payment' && isEditing && current && 'status' in current && current.status === 'Pending' && values.status === 'Confirmed' && current.bookingId) {
+      const booking = bookings.find((item) => item.id === current.bookingId)
+      const alreadyConfirmed = payments.filter((item) => item.bookingId === current.bookingId && item.id !== current.id && item.status === 'Confirmed').reduce((sum, item) => sum + item.amount, 0)
+      if (booking && alreadyConfirmed + Number(values.amount) > booking.agreedPrice) return setError('Confirming this payment would exceed the booking balance. Check other confirmed payments or correct the amount.')
     }
     if (action === 'supplier-cost' && Number(values.amount) <= 0) return setError('Supplier cost must be greater than zero.')
     if (action === 'supplier-cost' && isEditing && Number(values.amount) < (supplierCosts.find((cost) => cost.id === editing?.id)?.paid ?? 0)) return setError('Supplier cost cannot be reduced below the amount already paid.')
