@@ -314,3 +314,75 @@
 .auth-demo { width: 100%; min-height: 2.65rem; margin-top: .7rem; }
 .account-demo-note { border-color: #f0dfbf; background: #fffaf0; color: #a16b1e; }
 .account-demo-note span { color: #8d744d; }
+
+/* Branded workspace loading */
+.auth-loading, .workspace-loading {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f7f5f1;
+  color: #51483e;
+  text-align: center;
+}
+.auth-loading img {
+  width: 4.2rem;
+  height: 4.2rem;
+  object-fit: contain;
+  animation: brand-breathe 1.8s ease-in-out infinite;
+}
+.auth-loading span { margin-top: 1rem; font-size: .8rem; font-weight: 650; letter-spacing: .02em; }
+.auth-loading i {
+  width: 2.4rem;
+  height: .18rem;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #f0e5d8;
+  position: relative;
+}
+.auth-loading i::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  border-radius: inherit;
+  background: #e87521;
+  animation: loading-sweep 1.15s ease-in-out infinite;
+}
+.workspace-loading { gap: .35rem; padding: 2rem; }
+.workspace-loader {
+  position: relative;
+  display: grid;
+  width: 5.5rem;
+  height: 5.5rem;
+  place-items: center;
+  margin-bottom: .9rem;
+}
+.workspace-loader img {
+  z-index: 1;
+  width: 3.15rem;
+  height: 3.15rem;
+  object-fit: contain;
+  animation: brand-breathe 1.8s ease-in-out infinite;
+}
+.workspace-loader span {
+  position: absolute;
+  inset: .15rem;
+  border: 2px solid transparent;
+  border-top-color: #e87521;
+  border-right-color: #e87521;
+  border-radius: 50%;
+  animation: brand-spin 1.4s linear infinite;
+}
+.workspace-loader span:nth-child(3) { inset: .55rem; border-top-color: #e9b184; border-right-color: transparent; animation-duration: 1.9s; animation-direction: reverse; }
+.workspace-loader span:nth-child(4) { inset: -.2rem; border-top-color: #f2d7c1; border-right-color: transparent; animation-duration: 2.5s; }
+.workspace-loading > strong { margin-top: .2rem; font-size: .88rem; letter-spacing: -.01em; }
+.workspace-loading > p { margin: .15rem 0 0; color: #81786e; font-size: .7rem; }
+@keyframes brand-spin { to { transform: rotate(360deg); } }
+@keyframes brand-breathe { 0%, 100% { transform: scale(.96); opacity: .85; } 50% { transform: scale(1.04); opacity: 1; } }
+@keyframes loading-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(240%); } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-loading img, .auth-loading i::after, .workspace-loader img, .workspace-loader span { animation: none; }
+}
