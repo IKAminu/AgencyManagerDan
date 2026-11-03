@@ -43,6 +43,7 @@ export function QuickActionModal() {
     if (!values.name && (action === 'lead' || action === 'customer' || action === 'traveller')) return setError('Please enter a full name.')
     if (action === 'traveller' && !isEditing && !values.bookingId) return setError('Select the booking this traveller belongs to.')
     if (action === 'traveller' && values.customerId && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer profile.')
+    if (action === 'booking' && (!values.departureDate || !values.returnDate || !Number.isFinite(Date.parse(values.departureDate)) || !Number.isFinite(Date.parse(values.returnDate)))) return setError('Enter valid departure and return dates.')
     if (action === 'booking' && new Date(values.returnDate) <= new Date(values.departureDate)) return setError('Return date must be after the departure date.')
     if (action === 'booking' && Number(values.agreedPrice) <= 0) return setError('Agreed price must be greater than zero.')
     if (action === 'booking' && !isEditing && !customers.some((customer) => customer.id === values.customerId)) return setError('Select a valid customer for this booking.')
@@ -74,8 +75,17 @@ export function QuickActionModal() {
     if (action === 'supplier-payment' && !values.date) return setError('Enter the date the supplier payment was made.')
     if (action === 'supplier-payment' && !supplierCosts.some((cost) => cost.id === values.supplierCostId && cost.paid < cost.amount)) return setError('Select a supplier cost with an outstanding balance.')
     if (action === 'supplier-payment' && Number(values.amount) > (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.amount ?? 0) - (supplierCosts.find((cost) => cost.id === values.supplierCostId)?.paid ?? 0)) return setError('Payment cannot exceed the outstanding supplier balance.')
-    if (action === 'package' && Number(values.price) <= 0) return setError('Package selling price must be greater than zero.')
+    if (action === 'package' && (!Number.isFinite(Number(values.price)) || Number(values.price) <= 0)) return setError('Package selling price must be a valid number greater than zero.')
+    if (action === 'package' && (!Number.isFinite(Number(values.estimatedCost || 0)) || Number(values.estimatedCost || 0) < 0)) return setError('Estimated cost must be a valid amount of zero or more.')
     if (action === 'package' && Number(values.estimatedCost || 0) > Number(values.price)) return setError('Estimated cost cannot exceed the selling price.')
+    if (action === 'package' && (!Number.isInteger(Number(values.availability)) || Number(values.availability) < 0)) return setError('Available places must be a whole number of zero or more.')
+    if (action === 'document') {
+      if (!values.relatedReference?.trim()) return setError('Enter the reference or name of the related record.')
+      try {
+        const url = new URL(values.url)
+        if (url.protocol !== 'https:') return setError('Use a secure HTTPS link for this document.')
+      } catch { return setError('Enter a valid document link beginning with https://.') }
+    }
     if (isEditing && editing) updateRecord(action, editing.id, values)
     else addRecord(action, values)
     close()
