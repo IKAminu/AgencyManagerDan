@@ -108,12 +108,13 @@ export function TravellersPage() {
   const { travellers, bookings, customers, setAction, setEditing } = useAppStore()
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
   const groupRows = useMemo(() => {
-    const groups = new Map<string, { bookingId: string; group: string; travellers: typeof travellers }>()
+    const groups = new Map<string, { key: string; bookingId: string; group: string; travellers: typeof travellers }>()
     for (const traveller of travellers) {
-      const key = traveller.group?.trim() || `Individual · ${traveller.bookingId}`
+      const groupName = traveller.group?.trim() || 'Individual travellers'
+      const key = `${traveller.bookingId}::${groupName}`
       const existing = groups.get(key)
       if (existing) existing.travellers.push(traveller)
-      else groups.set(key, { bookingId: traveller.bookingId, group: key, travellers: [traveller] })
+      else groups.set(key, { key, bookingId: traveller.bookingId, group: groupName, travellers: [traveller] })
     }
     return Array.from(groups.values())
   }, [travellers])
@@ -121,7 +122,7 @@ export function TravellersPage() {
     const booking = bookings.find((entry) => entry.id === item.bookingId)
     return (!controls.filter || item.status === controls.filter) && `${item.name} ${item.group || ''} ${booking?.reference || ''} ${booking?.packageName || ''}`.toLowerCase().includes(controls.query.toLowerCase())
   })
-  const selected = groupRows.find((group) => group.group === selectedGroup)
+  const selected = groupRows.find((group) => group.key === selectedGroup)
   return <>
     <Module title="Travellers & operations" description="Track each traveller separately, while managing family and group readiness by booking." actionLabel="Add traveller" actionType="traveller" options={['Not Started', 'Documents Pending', 'Documents Complete', 'Ready for Travel', 'Departed', 'Abroad', 'Returned']} {...controls}>
       <div className="summary-strip">
@@ -135,7 +136,7 @@ export function TravellersPage() {
         const booking = bookings.find((item) => item.id === group.bookingId)
         const ready = group.travellers.filter((item) => ['Ready for Travel', 'Departed', 'Abroad', 'Returned'].includes(item.status)).length
         const docs = group.travellers.filter((item) => item.documentsComplete).length
-        return <tr key={group.group}><td><strong>{group.group.startsWith('Individual ·') ? 'Individual travellers' : group.group}</strong></td><td>{booking?.reference || 'Booking unavailable'}<span className="cell-sub">{booking?.packageName}</span></td><td>{customers.find((item) => item.id === booking?.customerId)?.name || 'Customer unavailable'}</td><td>{group.travellers.length}</td><td>{docs}/{group.travellers.length}</td><td>{ready}/{group.travellers.length}</td><td><Button variant="secondary" onClick={() => setSelectedGroup(group.group)}><Eye size={14}/> View group</Button></td></tr>
+        return <tr key={group.key}><td><strong>{group.group}</strong></td><td>{booking?.reference || 'Booking unavailable'}<span className="cell-sub">{booking?.packageName}</span></td><td>{customers.find((item) => item.id === booking?.customerId)?.name || 'Customer unavailable'}</td><td>{group.travellers.length}</td><td>{docs}/{group.travellers.length}</td><td>{ready}/{group.travellers.length}</td><td><Button variant="secondary" onClick={() => setSelectedGroup(group.key)}><Eye size={14}/> View group</Button></td></tr>
       })}</tbody></table></TableShell>
       <div className="section-heading"><div><h2>Individual traveller records</h2><p>Document readiness and travel status are tracked separately.</p></div></div>
       <TableShell><table><thead><tr><th>Traveller</th><th>Customer profile</th><th>Booking</th><th>Group</th><th>Departure</th><th>Expected return</th><th>Documents</th><th>Travel status</th><th>Actions</th></tr></thead><tbody>{rows.map((traveller) => {
