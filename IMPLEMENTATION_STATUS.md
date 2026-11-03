@@ -21,6 +21,10 @@
 - Header notifications are generated from current follow-ups, upcoming departures and overdue supplier costs rather than hardcoded demo messages; alerts navigate to the relevant module and can be dismissed with Escape.
 - Mobile usability refinements improve table horizontal scrolling, touch target sizes, modal sizing and sticky form actions. These are responsive CSS changes and have not yet been manually tested on a physical phone.
 - Operational date calculations and newly created record dates now use the Africa/Lagos calendar date, avoiding UTC date shifts around midnight.
+- Bookings now store a traveller party size. Creating a package booking reserves that number of places; increasing a party or moving an enquiry into a reserving status checks remaining capacity, while cancellation or returning a booking to Enquiry releases the reserved places. Completed bookings remain counted as consumed capacity.
+- Package availability status is recalculated when reservations change, including returning a package from Fully Booked to Active when places are released.
+- Supplier cost paid totals are recalculated from confirmed supplier-payment ledger entries when adding/voiding payments and editing a supplier cost, reducing drift between the ledger and summary totals.
+- Added `public/brand/README.md` as the designated location and instructions for the future logo asset. Public-folder files are not suitable for private customer documents.
 - Payment and supplier-cost forms validate date values before saving; upcoming-departure dashboard counts exclude cancelled and completed bookings.
 - New bookings can only select active packages with available places; package price, estimated cost and availability values are validated, and booking dates must be valid and ordered.
 - Document links must use valid HTTPS URLs, and the related record reference is required. Links remain references only; files are not uploaded or permission-checked by the app.
