@@ -108,8 +108,8 @@ export interface SupplierPayment {
   date: string
   method: 'Bank Transfer' | 'Cash' | 'POS' | 'Other'
   reference?: string
-  status?: 'Confirmed' | 'Reversed'
-  reversalReason?: string
+  status?: 'Confirmed' | 'Voided'
+  voidReason?: string
 }
 
 export interface DocumentRecord {
