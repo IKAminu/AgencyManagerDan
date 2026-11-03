@@ -96,7 +96,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }
       setCustomers((items) => [customer, ...items])
     }
-    setLeads((items) => items.map((item) => item.id === leadId ? { ...item, status: 'Converted' } : item))
+    setLeads((items) => items.map((item) => item.id === leadId ? { ...lead } : item))
   }
 
   const reversePayment = (paymentId: string, reason: string) => {
