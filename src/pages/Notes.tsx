@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { BookOpen, CalendarDays, Check, CheckCircle2, Circle, ClipboardList, FileText, LoaderCircle, Pencil, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
+import { BookOpen, CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, LoaderCircle, Pencil, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
 import { Link } from 'react-router'
 import { Badge, Button, EmptyState, Field, Input, Modal, PageHeader, Select } from '@/components/ui'
 import { useAppStore } from '@/hooks/useAppStore'
@@ -20,7 +20,7 @@ type AgencyNote = {
 }
 
 const demoNotes: AgencyNote[] = []
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
 const dateLabel = (value: string | null) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No due date'
 
 export function NotesPage() {
