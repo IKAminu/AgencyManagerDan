@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, ChevronDown, CircleDollarSign, CreditCard, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, UserPlus, Users, WalletCards, X } from 'lucide-react'
+import { Bell, BookOpen, BriefcaseBusiness, CalendarCheck, CheckCircle2, ChevronDown, CircleDollarSign, CreditCard, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Package, Plus, Search, Settings, ShieldCheck, StickyNote, UserPlus, Users, WalletCards, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, IconButton } from '@/components/ui'
@@ -19,7 +19,7 @@ const groups = [
   { label: 'Customers', links: [{ to: '/leads', label: 'Leads', icon: BriefcaseBusiness }, { to: '/customers', label: 'Customer records', icon: Users }] },
   { label: 'Travel management', links: [{ to: '/packages', label: 'Packages', icon: Package }, { to: '/bookings', label: 'Bookings', icon: BookOpen }, { to: '/travellers', label: 'Travellers & operations', icon: CalendarCheck }] },
   { label: 'Finance', links: [{ to: '/payments', label: 'Payments & balances', icon: CircleDollarSign }, { to: '/suppliers', label: 'Supplier payments', icon: WalletCards }] },
-  { label: 'Administration', links: [{ to: '/documents', label: 'Documents', icon: FileText }, { to: '/settings', label: 'Settings', icon: Settings }] },
+  { label: 'Administration', links: [{ to: '/documents', label: 'Documents', icon: FileText }, { to: '/notes', label: 'Notes', icon: StickyNote }, { to: '/settings', label: 'Settings', icon: Settings }] },
 ]
 
 export function AppLayout() {
