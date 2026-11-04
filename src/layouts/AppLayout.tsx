@@ -56,10 +56,28 @@ export function AppLayout() {
   }, [mode])
 
   useEffect(() => {
-    const updateConnection = () => setIsOnline(navigator.onLine)
+    let active = true
+    let probeTimer: number | undefined
+    const probeServer = async () => {
+      if (!navigator.onLine || !supabase) { if (active) setIsOnline(false); return }
+      try {
+        const { error } = await supabase.from('leads').select('id', { head: true, count: 'exact' }).limit(1)
+        if (active) setIsOnline(!error)
+      } catch {
+        if (active) setIsOnline(false)
+      }
+    }
+    const updateConnection = () => { if (!navigator.onLine) setIsOnline(false); else void probeServer() }
+    void probeServer()
+    probeTimer = window.setInterval(() => { void probeServer() }, 30000)
     window.addEventListener('online', updateConnection)
     window.addEventListener('offline', updateConnection)
-    return () => { window.removeEventListener('online', updateConnection); window.removeEventListener('offline', updateConnection) }
+    return () => {
+      active = false
+      if (probeTimer) window.clearInterval(probeTimer)
+      window.removeEventListener('online', updateConnection)
+      window.removeEventListener('offline', updateConnection)
+    }
   }, [])
 
   useEffect(() => {
