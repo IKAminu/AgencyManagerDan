@@ -142,7 +142,7 @@ export function AppLayout() {
     <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><img className="brand-logo" src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" /><div className="brand-name"><strong>Dandurgu</strong><span>Headquarters</span></div><IconButton label="Close navigation" className="mobile-close" onClick={() => setMenuOpen(false)}><X size={18} /></IconButton></div>
       <nav>{groups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} /><span>{label}</span></NavLink>)}</div>)}</nav>
-      <div className={`sidebar-foot ${mode === 'live' ? (isOnline ? 'mode-live' : 'mode-offline') : 'mode-demo'}`}><span className="status-dot" /> <div><strong>{mode === 'live' ? (isOnline ? 'Live' : 'Offline') : 'Demo Mode'}</strong><span>{mode === 'live' ? (isOnline ? 'Connected to server' : 'No internet connection') : 'Session-only sample records'}</span></div></div>
+      <div className={`sidebar-foot ${mode === 'live' ? (isOnline ? 'mode-live' : 'mode-offline') : 'mode-demo'}`}><span className="status-dot" /> <div><strong>{mode === 'live' ? (isOnline ? 'Live' : navigator.onLine ? 'Connection issue' : 'Offline') : 'Demo Mode'}</strong><span>{mode === 'live' ? (isOnline ? 'Connected to server' : navigator.onLine ? 'Server unavailable' : 'No internet connection') : 'Session-only sample records'}</span></div></div>
     </aside>
     {menuOpen && <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />}
     <div className="main-column">
