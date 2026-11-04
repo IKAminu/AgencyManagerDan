@@ -20,13 +20,13 @@ Set these values in a local `.env.local` file for development and as GitHub Acti
 - Authenticator-based TOTP MFA is required; live data access requires AAL2.
 - Database Row Level Security independently checks the authenticated role, AAL2 assurance, authorised email claim, and `is_demo = false`.
 - Anonymous users have no direct table grants.
-- Guest/demo mode uses bundled sample records and does not write to the live database.
+- Guest/demo mode uses bundled sample records and does not write to the live database. Notes created in Demo Mode are held only in the current browser session.
 
 The frontend allowlist is a user-experience gate, not the security boundary. Supabase RLS is the database enforcement layer. Keep the frontend allowlist and database policies in agreement when authorised accounts change.
 
 ## Live data model
 
-The live public schema currently contains the agency operations tables, including leads, customers, packages, bookings, travellers, payments, supplier costs, supplier payments, documents, suppliers and lead activities. All public tables must retain RLS.
+The live public schema currently contains the agency operations tables, including leads, customers, packages, bookings, travellers, payments, supplier costs, supplier payments, documents, suppliers, lead activities and the shared `agency_notes` workspace. All public tables must retain RLS.
 
 The current policy grants live access only to the approved MFA accounts. Do not replace these policies with a generic `TO authenticated` policy: authenticated role membership alone is not sufficient authorisation.
 
@@ -41,7 +41,7 @@ After changing Supabase configuration variables, rerun the deployment workflow s
 - Keep a verified database backup schedule and periodically test restoration.
 - Enable Supabase leaked-password protection in Authentication → Settings → Password Security.
 - Review RLS policies and database advisors after schema changes.
-- Schema changes should be reviewed and committed as SQL migrations. The current remote database migration history includes the initial operations schema and the authorised-MFA RLS policy optimisation; ensure the corresponding migration SQL is preserved in version control before making further structural changes.
+- Schema changes should be reviewed and committed as SQL migrations. The remote database migration history includes the initial operations schema, the authorised-MFA RLS policy optimisation and the shared agency notes workspace. The applied migrations are preserved under `supabase/migrations`.
 - The browser store currently loads records in pages and persists table snapshots. Deletions are serialised with pending saves, but multi-table writes are not atomic. A future server-side transactional persistence layer is recommended before introducing concurrent staff editing or complex workflows.
 
 ## Document handling
