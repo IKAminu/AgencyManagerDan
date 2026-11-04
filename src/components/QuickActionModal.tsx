@@ -17,7 +17,7 @@ const details: Record<QuickActionType, { title: string; description: string }> =
 }
 
 export function QuickActionModal() {
-  const { mode, action, setAction, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
+  const { mode, action, setAction, actionDefaults, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
   if (!action) return null
@@ -35,7 +35,7 @@ export function QuickActionModal() {
   }[action]) : undefined
   const isEditing = Boolean(current)
   const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package') }
-  const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : fallback
+  const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : (actionDefaults[key] ?? fallback)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -103,7 +103,7 @@ export function QuickActionModal() {
 
   return <Modal title={isEditing ? `Edit ${action}` : details[action].title} description={details[action].description} onClose={close}>
     <form className="form-grid" onSubmit={submit}>
-      {(action === 'lead' || action === 'customer' || action === 'traveller') && <Field label="Full name"><Input name="name" defaultValue={value('name')} autoFocus required /></Field>}
+      {(action === 'lead' || action === 'customer') && <Field label="Full name"><Input name="name" defaultValue={value('name')} autoFocus required /></Field>}
       {(action === 'lead' || action === 'customer') && <Field label="Phone number"><Input name="phone" type="tel" defaultValue={value('phone')} required /></Field>}
       {(action === 'lead' || action === 'customer') && <Field label="Email (optional)"><Input name="email" type="email" defaultValue={value('email')} /></Field>}
       {action === 'lead' && <>
@@ -183,7 +183,7 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
       </>}
       {action === 'traveller' && <>
-        {!isEditing && <Field label="Booking"><Select name="bookingId" required defaultValue=""><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required defaultValue={value('bookingId')}><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
         <Field label="Link to customer profile (optional)" hint="Choose an existing customer if this traveller already has a customer record. Dependants can remain traveller-only records."><Select name="customerId" defaultValue={value('customerId')}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
         <Field label="Traveller's full name"><Input name="name" defaultValue={value('name')} required /></Field>
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
