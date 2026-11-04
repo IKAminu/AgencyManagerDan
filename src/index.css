@@ -512,6 +512,18 @@
   .button, .icon-button, .nav-group a, .mobile-fab, .mobile-quick-option, .account-trigger {
     min-height: 2.75rem;
   }
+  /* Keep the account control circular while meeting the 44px mobile touch target. */
+  .account-trigger {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    aspect-ratio: 1;
+    flex: 0 0 2.75rem;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
