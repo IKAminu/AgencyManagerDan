@@ -138,6 +138,7 @@ export function AppLayout() {
   }, [query, leads, customers, bookings, travellers])
 
   return <div className="app-shell">
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     {saveNotice && <div className={`save-toast ${saveNotice.includes('Could not') ? 'save-toast-error' : ''}`} role="status" aria-live="polite">{saveNotice.includes('Updating') || saveNotice.includes('Saving') ? <LoaderCircle size={16} className="toast-spinner" /> : <CheckCircle2 size={16} />}<span>{saveNotice}</span></div>}
     <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><img className="brand-logo" src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" /><div className="brand-name"><strong>Dandurgu</strong><span>Headquarters</span></div><IconButton label="Close navigation" className="mobile-close" onClick={() => setMenuOpen(false)}><X size={18} /></IconButton></div>
@@ -170,7 +171,7 @@ export function AppLayout() {
           </div>
         </div>
       </header>
-      <main><Outlet /></main>
+      <main id="main-content" tabIndex={-1}><Outlet /></main>
     </div>
     <div className={`mobile-quick-actions ${quickActionsOpen ? 'is-open' : ''}`} ref={mobileQuickActionsRef}><div className="mobile-quick-menu" aria-hidden={!quickActionsOpen}>{primaryQuickActions.map(({ type, label, icon: Icon }, index) => <button className={`mobile-quick-option mobile-quick-option-${index + 1}`} key={type} type="button" tabIndex={quickActionsOpen ? 0 : -1} onClick={() => { setAction(type); setQuickActionsOpen(false) }}><Icon size={17} /><span>{label}</span></button>)}</div><button className="mobile-fab" aria-label={quickActionsOpen ? "Close quick actions" : "Open quick actions"} aria-expanded={quickActionsOpen} onClick={() => setQuickActionsOpen((open) => !open)}><Plus size={22} /></button></div>
     <QuickActionModal />
