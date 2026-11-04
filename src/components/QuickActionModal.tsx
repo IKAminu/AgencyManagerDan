@@ -21,6 +21,8 @@ export function QuickActionModal() {
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
   const [bookingPackageId, setBookingPackageId] = useState(actionDefaults.packageId || '')
+  const [bookingPackageName, setBookingPackageName] = useState(actionDefaults.packageName || '')
+  const [bookingAgreedPrice, setBookingAgreedPrice] = useState(actionDefaults.agreedPrice || '')
   const [paymentBookingId, setPaymentBookingId] = useState(actionDefaults.bookingId || '')
   const [travellerBookingId, setTravellerBookingId] = useState(actionDefaults.bookingId || '')
   const selectedBooking = bookings.find((booking) => booking.id === paymentBookingId)
@@ -43,7 +45,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setBookingPackageId(''); setPaymentBookingId(''); setTravellerBookingId('') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setBookingPackageId(''); setBookingPackageName(''); setBookingAgreedPrice(''); setPaymentBookingId(''); setTravellerBookingId('') }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : (actionDefaults[key] ?? fallback)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -131,9 +133,9 @@ export function QuickActionModal() {
       {action === 'booking' && <>
         {!isEditing && <Field label="Customer"><Select name="customerId" required defaultValue=""><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>}
         {isEditing && <Field label="Customer"><Input value={current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name || 'Customer unavailable' : 'Customer unavailable'} readOnly /><small>The booking owner is fixed after creation so payment and customer history remain consistent.</small></Field>}
-        {!isEditing && <Field label="Package (optional)"><Select name="packageId" value={bookingPackageId} onChange={(event) => setBookingPackageId(event.target.value)}><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
-        <Field label="Package / arrangement name"><Input name="packageName" value={!isEditing && selectedPackage ? selectedPackage.name : value('packageName')} onChange={() => {}} required /></Field>
-        <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" value={!isEditing && selectedPackage ? String(selectedPackage.price) : value('agreedPrice')} onChange={() => {}} required /></Field>
+        {!isEditing && <Field label="Package (optional)"><Select name="packageId" value={bookingPackageId} onChange={(event) => { const nextId = event.target.value; const nextPackage = packages.find((item) => item.id === nextId); setBookingPackageId(nextId); setBookingPackageName(nextPackage?.name || ''); setBookingAgreedPrice(nextPackage ? String(nextPackage.price) : '') }}><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
+        <Field label="Package / arrangement name"><Input name="packageName" value={!isEditing && bookingPackageId ? bookingPackageName : value('packageName')} onChange={(event) => setBookingPackageName(event.target.value)} required /></Field>
+        <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" value={!isEditing && bookingPackageId ? bookingAgreedPrice : value('agreedPrice')} onChange={(event) => setBookingAgreedPrice(event.target.value)} required /></Field>
         {!isEditing && selectedPackage && <p className="info-note">Package details have been filled from the catalogue. The agreed price remains editable if you negotiate a different amount.</p>}
         <Field label="Number of travellers"><Input name="partySize" type="number" min="1" step="1" defaultValue={value('partySize', '1')} required /></Field>
         <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
