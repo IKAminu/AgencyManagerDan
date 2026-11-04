@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { todayDate } from '@/lib/business'
-import { loadLiveStore, saveLiveStore } from '@/lib/supabaseStore'
+import { deleteLiveRecords, loadLiveStore, saveLiveStore } from '@/lib/supabaseStore'
 import { supabase } from '@/lib/supabase'
 import { waitForMinimumLoadingTime } from '@/lib/loading'
 import type { AppMode } from '@/auth/AuthGate'
@@ -20,7 +20,9 @@ type AppStore = {
   supplierPayments: SupplierPayment[]
   documents: DocumentRecord[]
   action: QuickActionType | null
-  setAction: (action: QuickActionType | null) => void
+  setAction: (action: QuickActionType | null, defaults?: Record<string, string>) => void
+  actionDefaults: Record<string, string>
+  deleteRecords: (type: 'lead' | 'customer' | 'package' | 'booking' | 'traveller' | 'supplier-cost' | 'document', recordIds: string[]) => Promise<void>
   addRecord: (type: QuickActionType, values: Record<string, string>) => void
   editing: { type: QuickActionType; id: string } | null
   setEditing: (value: { type: QuickActionType; id: string } | null) => void
@@ -131,7 +133,9 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
       void supabase!.removeChannel(channel)
     }
   }, [isDemo, dataReady, dataError])
-  const [action, setAction] = useState<QuickActionType | null>(null)
+  const [action, setActionState] = useState<QuickActionType | null>(null)
+  const [actionDefaults, setActionDefaults] = useState<Record<string, string>>({})
+  const setAction = (nextAction: QuickActionType | null, defaults: Record<string, string> = {}) => { setActionState(nextAction); setActionDefaults(nextAction ? defaults : {}) }
   const [editing, setEditing] = useState<{ type: QuickActionType; id: string } | null>(null)
 
   const addRecord = (type: QuickActionType, values: Record<string, string>) => {
@@ -179,6 +183,30 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setAction(null)
   }
 
+
+  const deleteRecords = async (type: 'lead' | 'customer' | 'package' | 'booking' | 'traveller' | 'supplier-cost' | 'document', recordIds: string[]) => {
+    const ids = Array.from(new Set(recordIds)).filter(Boolean)
+    if (!ids.length) return
+    const dependencies: Partial<Record<typeof type, boolean>> = {
+      lead: ids.some((recordId) => customers.some((item) => item.leadId === recordId)),
+      customer: ids.some((recordId) => bookings.some((item) => item.customerId === recordId) || payments.some((item) => item.customerId === recordId)),
+      package: ids.some((recordId) => bookings.some((item) => item.packageId === recordId) || payments.some((item) => item.packageId === recordId)),
+      booking: ids.some((recordId) => travellers.some((item) => item.bookingId === recordId) || payments.some((item) => item.bookingId === recordId) || supplierCosts.some((item) => item.bookingId === recordId)),
+      'supplier-cost': ids.some((recordId) => supplierPayments.some((item) => item.supplierCostId === recordId)),
+    }
+    if (dependencies[type]) throw new Error('Some selected records have linked records. Remove or reassign those links first. Booking and financial history is protected.')
+    if (!isDemo) {
+      const tableByType: Record<typeof type, string> = { lead: 'leads', customer: 'customers', package: 'packages', booking: 'bookings', traveller: 'travellers', 'supplier-cost': 'supplier_costs', document: 'documents' }
+      await deleteLiveRecords(tableByType[type], ids)
+    }
+    if (type === 'lead') setLeads((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'customer') setCustomers((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'package') setPackages((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'booking') setBookings((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'traveller') setTravellers((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'supplier-cost') setSupplierCosts((items) => items.filter((item) => !ids.includes(item.id)))
+    if (type === 'document') setDocuments((items) => items.filter((item) => !ids.includes(item.id)))
+  }
 
   const convertLead = (leadId: string, values: Record<string, string> = {}) => {
     const original = leads.find((item) => item.id === leadId)
@@ -249,7 +277,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, editing])
+  const value = useMemo(() => ({ mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, actionDefaults, deleteRecords, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, actionDefaults, editing])
   return <StoreContext.Provider value={value}>{!isDemo && dataError ? <div role="alert" className="data-connection-error">Live database error: {dataError}. The workspace has been paused so that changes cannot overwrite records that failed to load.</div> : !isDemo && !dataReady ? <div className="workspace-loading" role="status"><div className="workspace-loader"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span /><span /><span /></div><strong>Preparing your workspace</strong><p>Loading agency records securely…</p></div> : children}</StoreContext.Provider>
 }
 
