@@ -10,6 +10,8 @@ import type { Booking, Customer, Lead, Payment, DocumentRecord, QuickActionType,
 type AppStore = {
   mode: AppMode
   saveNotice: string | null
+  saveError: string | null
+  retrySave: () => void
   leads: Lead[]
   customers: Customer[]
   bookings: Booking[]
@@ -56,6 +58,9 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
   const [dataReady, setDataReady] = useState(isDemo)
   const [dataError, setDataError] = useState<string | null>(null)
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveRetry, setSaveRetry] = useState(0)
+  const saveQueue = useRef<Promise<void>>(Promise.resolve())
   const skipNextSave = useRef(false)
   const noticeTimer = useRef<number | undefined>(undefined)
   const showNotice = (message: string) => {
@@ -88,18 +93,22 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
   useEffect(() => {
     if (isDemo || !dataReady || dataError) return
     if (skipNextSave.current) { skipNextSave.current = false; return }
-    const timer = window.setTimeout(async () => {
+    const snapshot = { leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents }
+    const timer = window.setTimeout(() => {
       showNotice('Saving changes…')
-      try {
-        await saveLiveStore({ leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents })
-        showNotice('Record saved')
-      } catch (error) {
-        setDataError(error instanceof Error ? error.message : 'Could not save agency records to Supabase.')
-        showNotice('Could not save record')
-      }
+      // Serialize full snapshots so an older, slower save cannot overwrite a newer one.
+      saveQueue.current = saveQueue.current.catch(() => undefined).then(() => saveLiveStore(snapshot))
+        .then(() => {
+          setSaveError(null)
+          showNotice('Changes saved')
+        })
+        .catch((error: unknown) => {
+          setSaveError(error instanceof Error ? error.message : 'Could not save agency records to Supabase.')
+          showNotice('Could not save changes')
+        })
     }, 500)
     return () => window.clearTimeout(timer)
-  }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError, isDemo])
+  }, [leads, customers, packages, bookings, travellers, payments, supplierCosts, supplierPayments, documents, dataReady, dataError, isDemo, saveRetry])
 
   useEffect(() => {
     if (isDemo || !dataReady || dataError || !supabase) return
@@ -277,8 +286,10 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     setEditing(null)
   }
 
-  const value = useMemo(() => ({ mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, actionDefaults, deleteRecords, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, saveNotice, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, actionDefaults, editing])
-  return <StoreContext.Provider value={value}>{!isDemo && dataError ? <div role="alert" className="data-connection-error">Live database error: {dataError}. The workspace has been paused so that changes cannot overwrite records that failed to load.</div> : !isDemo && !dataReady ? <div className="workspace-loading" role="status"><div className="workspace-loader"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span /><span /><span /></div><strong>Preparing your workspace</strong><p>Loading agency records securely…</p></div> : children}</StoreContext.Provider>
+  const retrySave = () => { setSaveError(null); setSaveRetry((attempt) => attempt + 1) }
+
+  const value = useMemo(() => ({ mode, saveNotice, saveError, retrySave, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, setAction, actionDefaults, deleteRecords, addRecord, editing, setEditing, updateRecord, convertLead, reversePayment, voidSupplierPayment }), [mode, saveNotice, saveError, leads, customers, bookings, packages, payments, travellers, supplierCosts, supplierPayments, documents, action, actionDefaults, editing])
+  return <StoreContext.Provider value={value}>{!isDemo && dataError ? <div role="alert" className="data-connection-error">Live database error: {dataError}. The workspace has been paused so that changes cannot overwrite records that failed to load.</div> : !isDemo && !dataReady ? <div className="workspace-loading" role="status"><div className="workspace-loader"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span /><span /><span /></div><strong>Preparing your workspace</strong><p>Loading agency records securely…</p></div> : <>{!isDemo && saveError && <div className="data-save-error" role="alert"><div><strong>Some changes haven't reached the database.</strong><span>{saveError}</span></div><button type="button" onClick={retrySave}>Retry save</button></div>}{children}</>}</StoreContext.Provider>
 }
 
 export const useAppStore = () => {
