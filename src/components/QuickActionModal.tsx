@@ -90,11 +90,11 @@ export function QuickActionModal() {
       const matchingCustomers = customers.filter((customer) => customer.name.trim().toLocaleLowerCase() === enteredName)
       const selectedCustomer = customers.find((customer) => customer.reference === values.customerName.split(' — ').at(-1)) || (matchingCustomers.length === 1 ? matchingCustomers[0] : undefined)
       if (!selectedCustomer && !values.customerPhone?.trim()) return setError('Enter a phone number when adding a new customer.')
-      if (values.purposeType === 'package' && !values.packageId) return setError('Select the package this payment is for.')
+      if (values.purposeType === 'package' && !values.packageId && !values.bookingId) return setError('Select the package this payment is for.')
       if (values.purposeType === 'custom' && !values.customPurpose?.trim()) return setError('Enter a description for this custom payment.')
       if (!selectedCustomer && values.bookingId) return setError("A new customer cannot be linked to an existing customer's booking. Create their booking separately first.")
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId)?.customerId !== selectedCustomer.id) return setError('The selected booking does not belong to this customer.')
-      if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
+      if (values.bookingId && values.purposeType === 'package' && bookings.find((booking) => booking.id === values.bookingId)?.packageId && bookings.find((booking) => booking.id === values.bookingId)?.packageId !== values.packageId) return setError('The selected booking is not for this package.')
       if (values.bookingId && selectedCustomer && bookings.find((booking) => booking.id === values.bookingId) && payments.filter((payment) => payment.bookingId === values.bookingId && payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0) + Number(values.amount) > (bookings.find((booking) => booking.id === values.bookingId)?.agreedPrice ?? 0)) return setError('This payment exceeds the booking balance. Check the existing payments or adjust the amount.')
     }
     if (action === 'payment' && isEditing && current && 'status' in current && current.status === 'Pending' && values.status === 'Confirmed' && current.bookingId) {
