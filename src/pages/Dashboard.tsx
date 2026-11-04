@@ -15,7 +15,7 @@ export function Dashboard() {
     supabase?.auth.getUser().then(({ data }) => {
       const email = data.user?.email?.toLowerCase()
       if (!active || !email) return
-      setGreetingName(email === 'ikaminumail@gmail.com' ? 'IK' : email === 'dandurguairtravels@gmail.com' ? 'Aliyu' : (data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || email.split('@')[0]))
+      setGreetingName(email === 'ikaminumail@gmail.com' ? 'Ik' : email === 'dandurguairtravels@gmail.com' ? 'Aliyu' : (data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || email.split('@')[0]))
     })
     return () => { active = false }
   }, [mode])
