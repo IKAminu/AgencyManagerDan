@@ -128,3 +128,11 @@ async function saveStore(data: {
 
 export const loadLiveStore = () => loadStore()
 export const saveLiveStore = (data: Parameters<typeof saveStore>[0]) => saveStore(data)
+
+
+export async function deleteLiveRecords(table: string, ids: string[]) {
+  if (!ids.length) return
+  const { data, error } = await client().from(table).delete().in('id', ids).eq('is_demo', false).select('id')
+  if (error) throw error
+  if ((data?.length ?? 0) !== ids.length) throw new Error('Not all selected records could be deleted. Check permissions or whether a record has linked data.')
+}
