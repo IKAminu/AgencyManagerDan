@@ -206,7 +206,10 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     if (dependencies[type]) throw new Error('Some selected records have linked records. Remove or reassign those links first. Booking and financial history is protected.')
     if (!isDemo) {
       const tableByType: Record<typeof type, string> = { lead: 'leads', customer: 'customers', package: 'packages', booking: 'bookings', traveller: 'travellers', 'supplier-cost': 'supplier_costs', document: 'documents' }
-      await deleteLiveRecords(tableByType[type], ids)
+      // Put deletions in the same queue as snapshot upserts. Otherwise an older
+      // debounced save could finish after the delete and recreate the removed row.
+      saveQueue.current = saveQueue.current.catch(() => undefined).then(() => deleteLiveRecords(tableByType[type], ids))
+      await saveQueue.current
     }
     if (type === 'lead') setLeads((items) => items.filter((item) => !ids.includes(item.id)))
     if (type === 'customer') setCustomers((items) => items.filter((item) => !ids.includes(item.id)))
