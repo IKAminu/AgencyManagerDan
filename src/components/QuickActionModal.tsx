@@ -83,6 +83,7 @@ export function QuickActionModal() {
       if (selectedPackage && additionalPlaces > 0 && (selectedPackage.status !== 'Active' || selectedPackage.availability < additionalPlaces)) return setError('There are not enough remaining places to make this booking change.')
     }
     if (action === 'payment' && (!Number.isFinite(Number(values.amount)) || Number(values.amount) <= 0)) return setError('Amount must be a valid number greater than zero.')
+    if (action === 'payment' && !['Pending', 'Confirmed'].includes(values.status)) return setError('Select whether this payment is pending or confirmed.')
     if (action === 'payment' && (!values.date || !Number.isFinite(Date.parse(values.date)))) return setError('Enter a valid date the payment was received.')
     if (action === 'payment' && !isEditing) {
       const enteredName = values.customerName.split(' — ')[0].trim().toLocaleLowerCase()
@@ -162,6 +163,10 @@ export function QuickActionModal() {
             <Field label="Booking owner"><Input value={selectedBookingCustomer?.name || 'Customer unavailable'} readOnly /></Field>
             <Field label="Booking / package"><Input value={selectedBooking.packageName} readOnly /></Field>
             <Field label="Agreed booking price"><Input value={money(selectedBooking.agreedPrice)} readOnly /></Field>
+            <Field label="Departure date"><Input value={selectedBooking.departureDate} readOnly /></Field>
+            <Field label="Return date"><Input value={selectedBooking.returnDate} readOnly /></Field>
+            <Field label="Travellers on booking"><Input value={String(selectedBooking.partySize || 1)} readOnly /></Field>
+            <Field label="Booking status"><Input value={selectedBooking.status} readOnly /></Field>
             <Field label="Outstanding balance"><Input value={money(Math.max(0, selectedBooking.agreedPrice - payments.filter((payment) => payment.bookingId === selectedBooking.id && payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)))} readOnly /></Field>
             <input type="hidden" name="customerName" value={selectedBookingCustomer ? `${selectedBookingCustomer.name} — ${selectedBookingCustomer.reference}` : ''} />
             <input type="hidden" name="packageId" value={selectedBooking.packageId || ''} />
@@ -181,7 +186,7 @@ export function QuickActionModal() {
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && (!current || !('status' in current) || current.status !== 'Pending')} required /></Field>
         <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
-        {!isEditing && <Field label="Status"><Select name="status" defaultValue="Confirmed"><option>Pending</option><option>Confirmed</option></Select></Field>}
+        {!isEditing && <Field label="Confirmation state"><Select name="status" defaultValue="" required><option value="">Select confirmation state</option><option>Pending</option><option>Confirmed</option></Select></Field>}
         {isEditing && current && 'status' in current && current.status === 'Pending' && <Field label="Status"><Select name="status" defaultValue="Pending"><option>Pending</option><option>Confirmed</option><option>Failed</option></Select></Field>}
         {isEditing && current && 'status' in current && current.status !== 'Pending' && <Field label="Status"><Input value={value('status')} readOnly /></Field>}
         <Field label="Transaction reference"><Input name="transactionReference" defaultValue={value('transactionReference')} /></Field>
