@@ -161,27 +161,51 @@ export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode 
   const [ready, setReady] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
   const [mode, setMode] = useState<AppMode | null>(null)
+  const [authError, setAuthError] = useState('')
 
   useEffect(() => {
     let alive = true
     const checkSession = async (current: Session | null) => {
       if (!alive) return
-      if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
-        if (current) await supabase!.auth.signOut()
+      try {
+        if (!current || !ALLOWED_EMAILS.has((current.user.email || '').toLowerCase())) {
+          if (current) {
+            const { error } = await supabase!.auth.signOut()
+            if (error) throw error
+          }
+          await waitForMinimumLoadingTime()
+          if (alive) { setSession(null); setAuthenticated(false); setMode((previous) => previous === 'demo' ? 'demo' : null); setAuthError(''); setReady(true) }
+          return
+        }
+        const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (error) throw error
         await waitForMinimumLoadingTime()
-        if (alive) { setSession(null); setAuthenticated(false); setMode((current) => current === 'demo' ? 'demo' : null); setReady(true) }
-        return
-      }
-      const { data, error } = await supabase!.auth.mfa.getAuthenticatorAssuranceLevel()
-      await waitForMinimumLoadingTime()
-      if (alive) {
-        setSession(current)
-        setAuthenticated(!error && data.currentLevel === 'aal2')
-        setMode(!error && data.currentLevel === 'aal2' ? 'live' : null)
-        setReady(true)
+        if (alive) {
+          setSession(current)
+          setAuthenticated(data.currentLevel === 'aal2')
+          setMode(data.currentLevel === 'aal2' ? 'live' : null)
+          setAuthError('')
+          setReady(true)
+        }
+      } catch (error) {
+        await waitForMinimumLoadingTime()
+        if (alive) {
+          setSession(null)
+          setAuthenticated(false)
+          setMode(null)
+          setAuthError(error instanceof Error ? error.message : 'The sign-in service could not be reached. Check your connection and try again.')
+          setReady(true)
+        }
       }
     }
-    supabase!.auth.getSession().then(({ data }) => checkSession(data.session))
+    supabase!.auth.getSession().then(({ data, error }) => {
+      if (error) throw error
+      return checkSession(data.session)
+    }).catch((error: unknown) => {
+      if (!alive) return
+      setAuthError(error instanceof Error ? error.message : 'The sign-in service could not be reached. Check your connection and try again.')
+      setReady(true)
+    })
     const { data: listener } = supabase!.auth.onAuthStateChange((_event, current) => {
       void checkSession(current)
     })
@@ -190,6 +214,7 @@ export function AuthGate({ children }: { children: (mode: AppMode) => ReactNode 
 
   if (!supabase) return <div className="auth-screen"><section className="auth-panel"><h1>Configuration required</h1><p>Supabase connection settings are missing. Contact the app administrator.</p></section></div>
   if (!ready) return <div className="auth-loading"><img src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="" /><span>Preparing secure workspace</span><i /></div>
+  if (authError) return <div className="auth-screen"><section className="auth-panel"><h1>Could not verify your session</h1><p className="auth-description" role="alert">{authError}</p><button className="button button-primary auth-submit" type="button" onClick={() => window.location.reload()}>Try again</button></section></div>
   if (mode === 'demo') return <>{children('demo')}</>
   if (!session || !authenticated) return <AuthScreen onDemo={async () => { const { error } = await supabase!.auth.signOut(); if (error) throw error; setSession(null); setAuthenticated(false); setMode('demo') }} onAuthenticated={(nextSession) => { setSession(nextSession); setAuthenticated(true); setMode('live') }} />
   return <>{mode === 'live' ? children('live') : null}</>
