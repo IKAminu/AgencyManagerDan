@@ -1,4 +1,2 @@
 User-agent: *
 Allow: /
-
-# The application is private and declares noindex in its HTML metadata.
