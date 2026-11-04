@@ -1,19 +1,30 @@
+import { useEffect, useState } from 'react'
 import { ArrowRight, CalendarDays, CircleDollarSign, Clock3, PlaneLanding, PlaneTakeoff, Users } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { Link } from 'react-router'
-import { Badge, Button, PageHeader, TableShell } from '@/components/ui'
+import { Badge, PageHeader, TableShell } from '@/components/ui'
 import { useAppStore } from '@/hooks/useAppStore'
 import { bookingBalance, confirmedPaid, daysFromToday, money, shortDate, travellerCount } from '@/lib/business'
-import type { QuickActionType } from '@/types'
 
 export function Dashboard() {
-  const { mode, leads, bookings, customers, payments, travellers, setAction } = useAppStore()
+  const { mode, leads, bookings, customers, payments, travellers } = useAppStore()
+  const [greetingName, setGreetingName] = useState(mode === 'demo' ? 'guest' : 'there')
+  useEffect(() => {
+    if (mode === 'demo') { setGreetingName('guest'); return }
+    let active = true
+    supabase?.auth.getUser().then(({ data }) => {
+      const email = data.user?.email?.toLowerCase()
+      if (!active || !email) return
+      setGreetingName(email === 'ikaminumail@gmail.com' ? 'IK' : email === 'dandurguairtravels@gmail.com' ? 'Aliyu' : (data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || email.split('@')[0]))
+    })
+    return () => { active = false }
+  }, [mode])
   const activeLeads = leads.filter((lead) => !['Converted', 'Lost', 'Not Interested'].includes(lead.status))
   const activeBookings = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status))
   const upcoming = bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status) && daysFromToday(booking.departureDate) >= 0 && daysFromToday(booking.departureDate) <= 7)
   const abroad = travellers.filter((traveller) => traveller.status === 'Abroad')
   const outstanding = bookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0)
   const received = payments.filter((payment) => payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)
-  const quickActions: { label: string; type: QuickActionType }[] = [{ label: 'Add lead', type: 'lead' }, { label: 'Add customer', type: 'customer' }, { label: 'Create booking', type: 'booking' }, { label: 'Record payment', type: 'payment' }, { label: 'Add traveller', type: 'traveller' }]
 
   const metrics = [
     { label: 'Active leads', value: activeLeads.length, detail: `${leads.filter((lead) => lead.status === 'New').length} awaiting attention`, icon: Users, to: '/leads' },
@@ -25,10 +36,9 @@ export function Dashboard() {
   ]
 
   return <div className="page">
-    <PageHeader title="Good morning" description="Here is what needs attention across Dandurgu today." action={<div className="date-chip"><CalendarDays size={16} /> {shortDate(new Date().toISOString().slice(0, 10))}</div>} />
+    <PageHeader title={`Good morning, ${greetingName}`} description="Here is what needs attention across Dandurgu today." action={<div className="date-chip"><CalendarDays size={16} /> {shortDate(new Date().toISOString().slice(0, 10))}</div>} />
     {mode === 'demo' && <section className="demo-banner"><div><strong>Demo workspace</strong><span>Sample records only. Changes stay in this session and are discarded when you leave.</span></div><Link to="/settings">View workspace settings <ArrowRight size={15} /></Link></section>}
     <section className="metrics-grid">{metrics.map(({ label, value, detail, icon: Icon, to }) => <Link className="metric" to={to} key={label}><div className="metric-head"><span>{label}</span><Icon size={18} /></div><strong>{value}</strong><p>{detail}</p></Link>)}</section>
-    <section className="quick-strip"><div><strong>Quick actions</strong><span>Start a common task without leaving the dashboard.</span></div><div>{quickActions.map((action) => <Button variant="secondary" key={action.type} onClick={() => setAction(action.type)}>{action.label}</Button>)}</div></section>
     <div className="dashboard-grid">
       <section className="content-section span-two">
         <div className="section-title"><div><h2>Upcoming departures</h2><p>Bookings departing in the next seven days.</p></div><Link to="/bookings">View all <ArrowRight size={15} /></Link></div>
