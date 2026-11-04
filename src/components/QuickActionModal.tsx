@@ -25,8 +25,8 @@ export function QuickActionModal() {
   const [bookingAgreedPrice, setBookingAgreedPrice] = useState(actionDefaults.agreedPrice || '')
   const [paymentBookingId, setPaymentBookingId] = useState(actionDefaults.bookingId || '')
   const [travellerBookingId, setTravellerBookingId] = useState(actionDefaults.bookingId || '')
-  const [travellerCustomerId, setTravellerCustomerId] = useState(actionDefaults.customerId || '')
-  const [travellerName, setTravellerName] = useState(actionDefaults.name || '')
+  const [travellerCustomerId, setTravellerCustomerId] = useState<string | null>(null)
+  const [travellerName, setTravellerName] = useState<string | null>(null)
   const selectedBooking = bookings.find((booking) => booking.id === paymentBookingId)
   const selectedBookingCustomer = selectedBooking ? customers.find((customer) => customer.id === selectedBooking.customerId) : undefined
   const selectedBookingPackage = selectedBooking ? packages.find((item) => item.id === selectedBooking.packageId) : undefined
@@ -40,8 +40,8 @@ export function QuickActionModal() {
     setBookingAgreedPrice(actionDefaults.agreedPrice || '')
     setPaymentBookingId(actionDefaults.bookingId || '')
     setTravellerBookingId(actionDefaults.bookingId || '')
-    setTravellerCustomerId(actionDefaults.customerId || '')
-    setTravellerName(actionDefaults.name || '')
+    setTravellerCustomerId(actionDefaults.customerId || null)
+    setTravellerName(actionDefaults.name || null)
     setPaymentPurposeType('package')
   }, [action, actionDefaults])
   if (!action) return null
@@ -58,7 +58,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setBookingPackageId(''); setBookingPackageName(''); setBookingAgreedPrice(''); setPaymentBookingId(''); setTravellerBookingId(''); setTravellerCustomerId(''); setTravellerName('') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setBookingPackageId(''); setBookingPackageName(''); setBookingAgreedPrice(''); setPaymentBookingId(''); setTravellerBookingId(''); setTravellerCustomerId(null); setTravellerName(null) }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : (actionDefaults[key] ?? fallback)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -225,9 +225,9 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
       </>}
       {action === 'traveller' && <>
-        {!isEditing && <Field label="Booking"><Select name="bookingId" required value={travellerBookingId} onChange={(event) => { const nextBookingId = event.target.value; const nextBooking = bookings.find((booking) => booking.id === nextBookingId); const owner = customers.find((customer) => customer.id === nextBooking?.customerId); setTravellerBookingId(nextBookingId); setTravellerCustomerId(owner?.id || ''); setTravellerName(owner?.name || '') }}><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
-        <Field label="Link to customer profile" hint="The booking owner is linked automatically. Change this only when the traveller is a different person with their own customer record."><Select name="customerId" value={!isEditing ? (travellerCustomerId || selectedTravellerOwner?.id || '') : value('customerId')} onChange={(event) => { const customerId = event.target.value; setTravellerCustomerId(customerId); if (customerId) { const customer = customers.find((item) => item.id === customerId); if (customer) setTravellerName(customer.name) } }}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
-        <Field label="Traveller's full name"><Input name="name" value={!isEditing ? (travellerName || selectedTravellerOwner?.name || '') : value('name')} onChange={(event) => setTravellerName(event.target.value)} required /></Field>
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required value={travellerBookingId} onChange={(event) => { const nextBookingId = event.target.value; const nextBooking = bookings.find((booking) => booking.id === nextBookingId); const owner = customers.find((customer) => customer.id === nextBooking?.customerId); setTravellerBookingId(nextBookingId); setTravellerCustomerId(owner?.id || null); setTravellerName(owner?.name || null) }}><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
+        <Field label="Link to customer profile" hint="The booking owner is linked automatically. Change this only when the traveller is a different person with their own customer record."><Select name="customerId" value={travellerCustomerId !== null ? travellerCustomerId : (!isEditing ? selectedTravellerOwner?.id || '' : value('customerId'))} onChange={(event) => { const customerId = event.target.value; setTravellerCustomerId(customerId); if (customerId) { const customer = customers.find((item) => item.id === customerId); if (customer) setTravellerName(customer.name) } }}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
+        <Field label="Traveller's full name"><Input name="name" value={travellerName !== null ? travellerName : (!isEditing ? selectedTravellerOwner?.name || '' : value('name'))} onChange={(event) => setTravellerName(event.target.value)} required /></Field>
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
         <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
         <Field label="Document readiness"><Select name="documentsComplete" defaultValue={value('documentsComplete', 'false')}><option value="false">Documents incomplete / pending</option><option value="true">Documents complete</option></Select></Field>
