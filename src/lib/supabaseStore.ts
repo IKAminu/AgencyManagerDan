@@ -7,9 +7,37 @@ const client = () => {
 }
 
 async function rows(table: string) {
-  const { data, error } = await client().from(table).select('*').eq('is_demo', false)
-  if (error) throw error
-  return data ?? []
+  const pageSize = 500
+  const records: Record<string, unknown>[] = []
+  let lastId: string | null = null
+
+  // Keyset pagination avoids the silent 1,000-row API cap and offset drift
+  // when new records are inserted while a large table is being loaded.
+  while (true) {
+    let query = client()
+      .from(table)
+      .select('*')
+      .eq('is_demo', false)
+      .order('id', { ascending: true })
+      .limit(pageSize)
+
+    if (lastId) query = query.gt('id', lastId)
+
+    const { data, error } = await query
+    if (error) throw error
+
+    const page = (data ?? []) as Record<string, unknown>[]
+    records.push(...page)
+    if (page.length < pageSize) break
+
+    const nextLastId = page[page.length - 1]?.id
+    if (typeof nextLastId !== 'string' || nextLastId === lastId) {
+      throw new Error(`Could not continue loading ${table}: pagination did not advance.`)
+    }
+    lastId = nextLastId
+  }
+
+  return records
 }
 
 async function loadStore() {
