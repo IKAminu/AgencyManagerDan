@@ -153,7 +153,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
       setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
     }
     if (type === 'package') setPackages((items) => [{ id: id(), code: values.code, name: values.name, category: values.category, destination: values.destination, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), currency: 'NGN', availability: Number(values.availability || 0), status: (values.status || 'Draft') as TravelPackage['status'] }, ...items])
-    if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
+    if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-${today().slice(0, 4)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: reference('CUS'), name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') {
       const selectedPackage = packages.find((item) => item.id === values.packageId)
@@ -164,7 +164,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
         const availability = selectedPackage.availability - partySize
         setPackages((items) => items.map((item) => item.id === selectedPackage.id ? { ...item, availability, status: packageAvailabilityStatus(item.status, availability) } : item))
       }
-      setBookings((items) => [{ id: id(), reference: `BKG-2026-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), partySize, currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status }, ...items])
+      setBookings((items) => [{ id: id(), reference: `BKG-${today().slice(0, 4)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), partySize, currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status }, ...items])
     }
     if (type === 'payment') {
       const enteredCustomerName = values.customerName?.split(' — ')[0].trim().toLocaleLowerCase()
