@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { Link } from 'react-router'
 import { Badge, PageHeader, TableShell } from '@/components/ui'
 import { useAppStore } from '@/hooks/useAppStore'
-import { bookingBalance, confirmedPaid, daysFromToday, money, shortDate, travellerCount } from '@/lib/business'
+import { bookingBalance, confirmedPaid, daysFromToday, money, shortDate, todayDate, travellerCount } from '@/lib/business'
 
 export function Dashboard() {
   const { mode, leads, bookings, customers, payments, travellers } = useAppStore()
@@ -25,6 +25,8 @@ export function Dashboard() {
   const abroad = travellers.filter((traveller) => traveller.status === 'Abroad')
   const outstanding = bookings.reduce((sum, booking) => sum + bookingBalance(booking, payments), 0)
   const received = payments.filter((payment) => payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)
+  const hour = Number(new Intl.DateTimeFormat('en-NG', { timeZone: 'Africa/Lagos', hour: '2-digit', hourCycle: 'h23' }).format(new Date()))
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const metrics = [
     { label: 'Active leads', value: activeLeads.length, detail: `${leads.filter((lead) => lead.status === 'New').length} awaiting attention`, icon: Users, to: '/leads' },
@@ -32,11 +34,11 @@ export function Dashboard() {
     { label: 'Confirmed payments', value: money(received), detail: 'Across recorded transactions', icon: CircleDollarSign, to: '/payments' },
     { label: 'Outstanding balance', value: money(outstanding), detail: 'Calculated from transactions', icon: Clock3, to: '/payments' },
     { label: 'Travellers abroad', value: abroad.length, detail: `${travellers.filter((item) => item.status === 'Ready for Travel').length} ready to travel`, icon: PlaneTakeoff, to: '/travellers' },
-    { label: 'Upcoming returns', value: bookings.filter((booking) => daysFromToday(booking.returnDate) >= 0 && daysFromToday(booking.returnDate) <= 10).length, detail: 'Within the next 10 days', icon: PlaneLanding, to: '/travellers' },
+    { label: 'Upcoming returns', value: bookings.filter((booking) => !['Completed', 'Cancelled'].includes(booking.status) && daysFromToday(booking.returnDate) >= 0 && daysFromToday(booking.returnDate) <= 10).length, detail: 'Within the next 10 days', icon: PlaneLanding, to: '/travellers' },
   ]
 
   return <div className="page">
-    <PageHeader title={`Good morning, ${greetingName}`} description="Here is what needs attention across Dandurgu today." action={<div className="date-chip"><CalendarDays size={16} /> {shortDate(new Date().toISOString().slice(0, 10))}</div>} />
+    <PageHeader title={`${greeting}, ${greetingName}`} description="Here is what needs attention across Dandurgu today." action={<div className="date-chip"><CalendarDays size={16} /> {shortDate(todayDate())}</div>} />
     {mode === 'demo' && <section className="demo-banner"><div><strong>Demo workspace</strong><span>Sample records only. Changes stay in this session and are discarded when you leave.</span></div><Link to="/settings">View workspace settings <ArrowRight size={15} /></Link></section>}
     <section className="metrics-grid">{metrics.map(({ label, value, detail, icon: Icon, to }) => <Link className="metric" to={to} key={label}><div className="metric-head"><span>{label}</span><Icon size={18} /></div><strong>{value}</strong><p>{detail}</p></Link>)}</section>
     <div className="dashboard-grid">
@@ -46,7 +48,7 @@ export function Dashboard() {
           const customer = customers.find((item) => item.id === booking.customerId)
           const count = travellerCount(booking.id, travellers)
           const missing = travellers.filter((item) => item.bookingId === booking.id && !item.documentsComplete).length
-          return <tr key={booking.id}><td><strong>{booking.reference}</strong></td><td>{customer?.name}</td><td>{booking.packageName}</td><td>{shortDate(booking.departureDate)}</td><td>{count}</td><td><Badge>{booking.status}</Badge></td><td>{missing ? `${missing} document check${missing > 1 ? 's' : ''}` : 'Ready'}</td></tr>
+          return <tr key={booking.id}><td><strong>{booking.reference}</strong></td><td>{customer?.name}</td><td>{booking.packageName}</td><td>{shortDate(booking.departureDate)}</td><td>{count}</td><td><Badge>{booking.status}</Badge></td><td>{!count ? 'Add travellers' : missing ? `${missing} document check${missing > 1 ? 's' : ''}` : 'Ready'}</td></tr>
         })}</tbody></table>{!upcoming.length && <div className="empty"><strong>No upcoming departures</strong><p>Bookings departing within the next seven days will appear here.</p></div>}</TableShell>
       </section>
       <section className="content-section">
@@ -57,7 +59,7 @@ export function Dashboard() {
         <div className="section-title"><div><h2>Currently abroad</h2><p>Travel has commenced; not marked returned.</p></div><Link to="/travellers">Operations</Link></div>
         <div className="list">{abroad.map((traveller) => {
           const booking = bookings.find((item) => item.id === traveller.bookingId)!
-          return <div className="list-row" key={traveller.id}><div className="avatar">{traveller.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{traveller.name}</strong><span>{booking.reference} · {booking.packageName}</span></div><div className="list-end"><Badge>{traveller.status}</Badge><small>Returns {shortDate(booking.returnDate)}</small></div></div>
+          return <div className="list-row" key={traveller.id}><div className="avatar">{traveller.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{traveller.name}</strong><span>{booking?.reference || 'Booking unavailable'} · {booking?.packageName || 'No package details'}</span></div><div className="list-end"><Badge>{traveller.status}</Badge><small>{booking ? `Returns ${shortDate(booking.returnDate)}` : 'Check booking link'}</small></div></div>
         })}</div>{!abroad.length && <div className="empty"><strong>No travellers currently abroad</strong><p>Travellers marked Abroad will appear here.</p></div>}
       </section>
       <section className="content-section span-two">
