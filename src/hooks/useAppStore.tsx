@@ -198,7 +198,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
     if (!ids.length) return
     const dependencies: Partial<Record<typeof type, boolean>> = {
       lead: ids.some((recordId) => customers.some((item) => item.leadId === recordId)),
-      customer: ids.some((recordId) => bookings.some((item) => item.customerId === recordId) || payments.some((item) => item.customerId === recordId)),
+      customer: ids.some((recordId) => bookings.some((item) => item.customerId === recordId) || payments.some((item) => item.customerId === recordId) || travellers.some((item) => item.customerId === recordId)),
       package: ids.some((recordId) => bookings.some((item) => item.packageId === recordId) || payments.some((item) => item.packageId === recordId)),
       booking: ids.some((recordId) => travellers.some((item) => item.bookingId === recordId) || payments.some((item) => item.bookingId === recordId) || supplierCosts.some((item) => item.bookingId === recordId)),
       'supplier-cost': ids.some((recordId) => supplierPayments.some((item) => item.supplierCostId === recordId)),
