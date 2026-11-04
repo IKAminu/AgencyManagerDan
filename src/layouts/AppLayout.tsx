@@ -30,6 +30,7 @@ export function AppLayout() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false)
   const [accountEmail, setAccountEmail] = useState('')
   const [accountName, setAccountName] = useState('')
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine)
   const notificationRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
   const quickActionsRef = useRef<HTMLDivElement>(null)
@@ -46,7 +47,7 @@ export function AppLayout() {
       const user = data.user
       const email = user.email || ''
       const metadataName = user.user_metadata?.full_name || user.user_metadata?.name || ''
-      const knownNames: Record<string, string> = { 'ikaminumail@gmail.com': 'IK Aminu', 'dandurguairtravels@gmail.com': 'Dandurgu Air Travel & Tours' }
+      const knownNames: Record<string, string> = { 'ikaminumail@gmail.com': 'IK', 'dandurguairtravels@gmail.com': 'Aliyu' }
       const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase())
       setAccountEmail(email)
       setAccountName(metadataName || knownNames[email.toLowerCase()] || fallbackName || 'Dandurgu user')
@@ -55,13 +56,22 @@ export function AppLayout() {
   }, [mode])
 
   useEffect(() => {
+    const updateConnection = () => setIsOnline(navigator.onLine)
+    window.addEventListener('online', updateConnection)
+    window.addEventListener('offline', updateConnection)
+    return () => { window.removeEventListener('online', updateConnection); window.removeEventListener('offline', updateConnection) }
+  }, [])
+
+  useEffect(() => {
     const closeOnOutsideClick = (event: PointerEvent) => {
       const target = event.target as Node
       if (!notificationRef.current?.contains(target)) setNotificationsOpen(false)
       if (!accountRef.current?.contains(target)) setAccountOpen(false)
       if (!quickActionsRef.current?.contains(target) && !mobileQuickActionsRef.current?.contains(target)) setQuickActionsOpen(false)
     }
-    const closeOnScroll = () => {
+    const closeOnScroll = (event: Event) => {
+      const target = event.target
+      if (target instanceof Node && notificationRef.current?.contains(target)) return
       setNotificationsOpen(false)
       setAccountOpen(false)
       setQuickActionsOpen(false)
@@ -114,7 +124,7 @@ export function AppLayout() {
     <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><img className="brand-logo" src={`${import.meta.env.BASE_URL}brand/logo.png`} alt="Dandurgu logo" /><div className="brand-name"><strong>Dandurgu</strong><span>Headquarters</span></div><IconButton label="Close navigation" className="mobile-close" onClick={() => setMenuOpen(false)}><X size={18} /></IconButton></div>
       <nav>{groups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} /><span>{label}</span></NavLink>)}</div>)}</nav>
-      <div className={`sidebar-foot ${mode === 'live' ? 'mode-live' : 'mode-demo'}`}><span className="status-dot" /> <div><strong>{mode === 'live' ? 'Live Mode' : 'Demo Mode'}</strong><span>{mode === 'live' ? 'Connected to agency records' : 'Session-only sample records'}</span></div></div>
+      <div className={`sidebar-foot ${mode === 'live' ? (isOnline ? 'mode-live' : 'mode-offline') : 'mode-demo'}`}><span className="status-dot" /> <div><strong>{mode === 'live' ? (isOnline ? 'Live' : 'Offline') : 'Demo Mode'}</strong><span>{mode === 'live' ? (isOnline ? 'Connected to server' : 'No internet connection') : 'Session-only sample records'}</span></div></div>
     </aside>
     {menuOpen && <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />}
     <div className="main-column">
