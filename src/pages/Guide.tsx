@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, CircleHelp, Search } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, CircleHelp, Search, StickyNote } from 'lucide-react'
 import { Link } from 'react-router'
 
 type GuideSection = {
@@ -296,7 +296,8 @@ export function GuidePage() {
   }, [query])
 
   return <div className="page operator-guide">
-    <div className="guide-back"><Link to="/settings"><ArrowLeft size={15} /> Back to Settings</Link></div>
+    <div className="guide-back"><Link to="/notes"><ArrowLeft size={15} /> Back to Notes</Link></div>
+    <div className="notes-subnav"><Link to="/notes"><StickyNote size={16} /> Agency notes</Link><Link className="notes-subnav-active" to="/notes/guidelines"><BookOpen size={16} /> Guidelines</Link></div>
     <header className="page-header guide-header">
       <div><div className="guide-eyebrow"><BookOpen size={15} /> OPERATIONS HANDBOOK</div><h1>Headquarters operator guide</h1><p>How to use each module, connect records and correct information without breaking the rest of the workflow.</p></div>
       <span className="guide-version">Operator reference</span>
