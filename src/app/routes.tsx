@@ -19,6 +19,7 @@ export const router = createBrowserRouter([
       { path: 'suppliers', lazy: async () => ({ Component: (await import('@/pages/Modules')).SuppliersPage }) },
       { path: 'documents', lazy: async () => ({ Component: (await import('@/pages/Modules')).DocumentsPage }) },
       { path: 'settings', lazy: async () => ({ Component: (await import('@/pages/Modules')).SettingsPage }) },
+      { path: 'settings/guide', lazy: async () => ({ Component: (await import('@/pages/Guide')).GuidePage }) },
       { path: '*', lazy: async () => ({ Component: (await import('@/pages/Modules')).NotFoundPage }) },
     ],
   },
