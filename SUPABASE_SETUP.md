@@ -1,16 +1,49 @@
-# Supabase setup
+# Supabase operations and setup
 
-Supabase is not connected in this repository.
+Supabase is connected to the live Dandurgu Headquarters application. This document describes the current deployment rather than the original prototype plan.
 
-1. Create a dedicated Supabase project.
-2. Review `DATABASE_SCHEMA.md` and the proposed migration before applying anything.
-3. Apply the approved migration in a controlled environment.
-4. Enable email/password authentication and invite only the two authorised users. Do not enable public registration.
-5. Review and test Row Level Security for every table with an authenticated test account.
-6. Copy the project URL and public anonymous/publishable key into `.env.local`.
-7. Keep service-role keys only in secure server-side functions.
-8. Set `VITE_USE_MOCK_DATA=false` only after the service mappings match the deployed schema.
-9. Test create, update, archive, conversion and financial reversal operations before using real records.
-10. Configure database backups and perform a restoration test.
+## Current application connection
 
-The current UI is a frontend demonstration. A login page alone would not protect data; Supabase Auth and RLS must enforce access.
+The browser application uses the Supabase JavaScript client with a public publishable key:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+For backward compatibility, `VITE_SUPABASE_ANON_KEY` is still accepted if the publishable-key variable is absent. Prefer the publishable key for new configuration.
+
+Set these values in a local `.env.local` file for development and as GitHub Actions repository or environment variables for Pages deployment. Never commit real environment files or place a Supabase secret/service-role key in a `VITE_*` variable. Browser variables are public by design.
+
+## Authentication and access
+
+- Live access uses Supabase email/password authentication.
+- The application checks an explicit authorised-account allowlist.
+- Authenticator-based TOTP MFA is required; live data access requires AAL2.
+- Database Row Level Security independently checks the authenticated role, AAL2 assurance, authorised email claim, and `is_demo = false`.
+- Anonymous users have no direct table grants.
+- Guest/demo mode uses bundled sample records and does not write to the live database.
+
+The frontend allowlist is a user-experience gate, not the security boundary. Supabase RLS is the database enforcement layer. Keep the frontend allowlist and database policies in agreement when authorised accounts change.
+
+## Live data model
+
+The live public schema currently contains the agency operations tables, including leads, customers, packages, bookings, travellers, payments, supplier costs, supplier payments, documents, suppliers and lead activities. All public tables must retain RLS.
+
+The current policy grants live access only to the approved MFA accounts. Do not replace these policies with a generic `TO authenticated` policy: authenticated role membership alone is not sufficient authorisation.
+
+## Deployment
+
+The GitHub Actions workflow installs from the committed pnpm lockfile, runs TypeScript checks, builds the application, and deploys the static output to GitHub Pages.
+
+After changing Supabase configuration variables, rerun the deployment workflow so the values are included in the browser build. The publishable key is safe to expose; a secret/service-role key is not.
+
+## Operational safeguards and remaining work
+
+- Keep a verified database backup schedule and periodically test restoration.
+- Enable Supabase leaked-password protection in Authentication → Settings → Password Security.
+- Review RLS policies and database advisors after schema changes.
+- Schema changes should be reviewed and committed as SQL migrations. The current remote database migration history includes the initial operations schema and the authorised-MFA RLS policy optimisation; ensure the corresponding migration SQL is preserved in version control before making further structural changes.
+- The browser store currently loads records in pages and persists table snapshots. Deletions are serialised with pending saves, but multi-table writes are not atomic. A future server-side transactional persistence layer is recommended before introducing concurrent staff editing or complex workflows.
+
+## Document handling
+
+The app stores secure document links; it does not upload passport files or receipts to Google Drive. Do not use public links for passports, identity documents or other sensitive traveller information. Configure private storage and explicit access controls before adding file uploads.
