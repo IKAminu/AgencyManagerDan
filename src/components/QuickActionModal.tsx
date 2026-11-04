@@ -20,6 +20,15 @@ export function QuickActionModal() {
   const { mode, action, setAction, actionDefaults, addRecord, updateRecord, editing, setEditing, leads, customers, bookings, packages, payments, travellers, supplierCosts, documents } = useAppStore()
   const [error, setError] = useState('')
   const [paymentPurposeType, setPaymentPurposeType] = useState<'package' | 'custom'>('package')
+  const [bookingPackageId, setBookingPackageId] = useState(actionDefaults.packageId || '')
+  const [paymentBookingId, setPaymentBookingId] = useState(actionDefaults.bookingId || '')
+  const [travellerBookingId, setTravellerBookingId] = useState(actionDefaults.bookingId || '')
+  const selectedBooking = bookings.find((booking) => booking.id === paymentBookingId)
+  const selectedBookingCustomer = selectedBooking ? customers.find((customer) => customer.id === selectedBooking.customerId) : undefined
+  const selectedBookingPackage = selectedBooking ? packages.find((item) => item.id === selectedBooking.packageId) : undefined
+  const selectedPackage = packages.find((item) => item.id === bookingPackageId)
+  const selectedTravellerBooking = bookings.find((booking) => booking.id === travellerBookingId)
+  const selectedTravellerOwner = selectedTravellerBooking ? customers.find((customer) => customer.id === selectedTravellerBooking.customerId) : undefined
   if (!action) return null
 
   const current = editing?.type === action ? ({
@@ -34,7 +43,7 @@ export function QuickActionModal() {
     document: documents.find((item) => item.id === editing.id),
   }[action]) : undefined
   const isEditing = Boolean(current)
-  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package') }
+  const close = () => { setAction(null); setEditing(null); setError(''); setPaymentPurposeType('package'); setBookingPackageId(''); setPaymentBookingId(''); setTravellerBookingId('') }
   const value = (key: string, fallback = '') => current && key in current ? String((current as unknown as Record<string, unknown>)[key] ?? '') : (actionDefaults[key] ?? fallback)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -122,9 +131,10 @@ export function QuickActionModal() {
       {action === 'booking' && <>
         {!isEditing && <Field label="Customer"><Select name="customerId" required defaultValue=""><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>}
         {isEditing && <Field label="Customer"><Input value={current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name || 'Customer unavailable' : 'Customer unavailable'} readOnly /><small>The booking owner is fixed after creation so payment and customer history remain consistent.</small></Field>}
-        {!isEditing && <Field label="Package (optional)"><Select name="packageId" defaultValue=""><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
-        <Field label="Package / arrangement name"><Input name="packageName" defaultValue={value('packageName')} required /></Field>
-        <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" defaultValue={value('agreedPrice')} required /></Field>
+        {!isEditing && <Field label="Package (optional)"><Select name="packageId" value={bookingPackageId} onChange={(event) => setBookingPackageId(event.target.value)}><option value="">Custom arrangement</option>{packages.filter((item) => item.status === 'Active' && item.availability > 0).map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)} · {item.availability} places</option>)}</Select></Field>}
+        <Field label="Package / arrangement name"><Input name="packageName" value={!isEditing && selectedPackage ? selectedPackage.name : value('packageName')} onChange={() => {}} required /></Field>
+        <Field label="Agreed price"><Input name="agreedPrice" type="number" min="1" value={!isEditing && selectedPackage ? String(selectedPackage.price) : value('agreedPrice')} onChange={() => {}} required /></Field>
+        {!isEditing && selectedPackage && <p className="info-note">Package details have been filled from the catalogue. The agreed price remains editable if you negotiate a different amount.</p>}
         <Field label="Number of travellers"><Input name="partySize" type="number" min="1" step="1" defaultValue={value('partySize', '1')} required /></Field>
         <Field label="Departure date"><Input name="departureDate" type="date" defaultValue={value('departureDate')} required /></Field>
         <Field label="Return date"><Input name="returnDate" type="date" defaultValue={value('returnDate')} required /></Field>
@@ -132,13 +142,25 @@ export function QuickActionModal() {
       </>}
       {action === 'payment' && <>
         {!isEditing && <>
-          <Field label="Customer" hint="Start typing a name. Choose a suggestion, or enter a new customer's name."><Input name="customerName" list="payment-customer-options" placeholder="Search or enter customer name" required /><datalist id="payment-customer-options">{customers.map((customer) => <option key={customer.id} value={`${customer.name} — ${customer.reference}`} />)}</datalist></Field>
-          <Field label="New customer's phone number" hint="Only needed when adding a new customer."><Input name="customerPhone" type="tel" placeholder="e.g. +234..." /></Field>
-          <Field label="New customer's email (optional)"><Input name="customerEmail" type="email" /></Field>
-          <Field label="New customer's nationality"><Input name="customerNationality" defaultValue="Nigerian" /></Field>
-          <Field label="What is this payment for?"><Select name="purposeType" value={paymentPurposeType} onChange={(event) => setPaymentPurposeType(event.target.value as 'package' | 'custom')}><option value="package">Existing package</option><option value="custom">Custom service or item</option></Select></Field>
-          {paymentPurposeType === 'package' ? <Field label="Package"><Select name="packageId" defaultValue=""><option value="">Select a package</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field> : <Field label="Custom payment description"><Input name="customPurpose" placeholder="e.g. Visa processing, flight ticket, hotel" required /></Field>}
-          <Field label="Related booking (optional)" hint="Only select a booking belonging to the customer above."><Select name="bookingId" defaultValue=""><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
+          <Field label="Related booking (optional)" hint="Choose a booking to automatically fill its owner, package and agreed price."><Select name="bookingId" value={paymentBookingId} onChange={(event) => setPaymentBookingId(event.target.value)}><option value="">Not linked to a booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.reference} · {booking.packageName}</option>)}</Select></Field>
+          {selectedBooking ? <>
+            <Field label="Booking owner"><Input value={selectedBookingCustomer?.name || 'Customer unavailable'} readOnly /></Field>
+            <Field label="Booking / package"><Input value={selectedBooking.packageName} readOnly /></Field>
+            <Field label="Agreed booking price"><Input value={money(selectedBooking.agreedPrice)} readOnly /></Field>
+            <Field label="Outstanding balance"><Input value={money(Math.max(0, selectedBooking.agreedPrice - payments.filter((payment) => payment.bookingId === selectedBooking.id && payment.status === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)))} readOnly /></Field>
+            <input type="hidden" name="customerName" value={selectedBookingCustomer ? `${selectedBookingCustomer.name} — ${selectedBookingCustomer.reference}` : ''} />
+            <input type="hidden" name="packageId" value={selectedBooking.packageId || ''} />
+            <input type="hidden" name="purposeType" value="package" />
+            <input type="hidden" name="bookingId" value={selectedBooking.id} />
+          </> : <>
+            <Field label="Customer" hint="Start typing a name. Choose a suggestion, or enter a new customer's name."><Input name="customerName" list="payment-customer-options" placeholder="Search or enter customer name" required /><datalist id="payment-customer-options">{customers.map((customer) => <option key={customer.id} value={`${customer.name} — ${customer.reference}`} />)}</datalist></Field>
+            <Field label="New customer's phone number" hint="Only needed when adding a new customer."><Input name="customerPhone" type="tel" placeholder="e.g. +234..." /></Field>
+            <Field label="New customer's email (optional)"><Input name="customerEmail" type="email" /></Field>
+            <Field label="New customer's nationality"><Input name="customerNationality" defaultValue="Nigerian" /></Field>
+            <Field label="What is this payment for?"><Select name="purposeType" value={paymentPurposeType} onChange={(event) => setPaymentPurposeType(event.target.value as 'package' | 'custom')}><option value="package">Existing package</option><option value="custom">Custom service or item</option></Select></Field>
+            {paymentPurposeType === 'package' ? <Field label="Package"><Select name="packageId" defaultValue=""><option value="">Select a package</option>{packages.filter((item) => item.status !== 'Archived').map((item) => <option key={item.id} value={item.id}>{item.name} · {money(item.price)}</option>)}</Select></Field> : <Field label="Custom payment description"><Input name="customPurpose" placeholder="e.g. Visa processing, flight ticket, hotel" required /></Field>}
+          </>}
+
         </>}
         {isEditing && <Field label="Customer"><Input value={(current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name : undefined) || 'Customer unavailable'} readOnly /></Field>}
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && (!current || !('status' in current) || current.status !== 'Pending')} required /></Field>
@@ -183,9 +205,10 @@ export function QuickActionModal() {
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
       </>}
       {action === 'traveller' && <>
-        {!isEditing && <Field label="Booking"><Select name="bookingId" required defaultValue={value('bookingId')}><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
-        <Field label="Link to customer profile (optional)" hint="Choose an existing customer if this traveller already has a customer record. Dependants can remain traveller-only records."><Select name="customerId" defaultValue={value('customerId')}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
-        <Field label="Traveller's full name"><Input name="name" defaultValue={value('name')} required /></Field>
+        {!isEditing && <Field label="Booking"><Select name="bookingId" required value={travellerBookingId} onChange={(event) => setTravellerBookingId(event.target.value)}><option value="">Select booking</option>{bookings.filter((booking) => booking.status !== 'Cancelled').map((booking) => <option key={booking.id} value={booking.id}>{booking.reference} · {customers.find((customer) => customer.id === booking.customerId)?.name} · {booking.packageName}</option>)}</Select></Field>}
+        <Field label="Link to customer profile" hint="The booking owner is linked automatically. Change this only when the traveller is a different person with their own customer record."><Select name="customerId" value={!isEditing && selectedTravellerOwner ? selectedTravellerOwner.id : value('customerId')} onChange={() => {}}><option value="">No linked customer profile</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.reference}</option>)}</Select></Field>
+        <Field label="Traveller's full name"><Input name="name" defaultValue={!isEditing && selectedTravellerOwner ? selectedTravellerOwner.name : value('name')} required /></Field>
+        <input type="hidden" name="customerId" value={!isEditing && selectedTravellerOwner ? selectedTravellerOwner.id : value('customerId')} />
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
         <Field label="Traveller group"><Input name="group" defaultValue={value('group')} placeholder="e.g. Bello Family" /></Field>
         <Field label="Document readiness"><Select name="documentsComplete" defaultValue={value('documentsComplete', 'false')}><option value="false">Documents incomplete / pending</option><option value="true">Documents complete</option></Select></Field>
