@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, Field, Input, Modal, Select } from '@/components/ui'
 import { money } from '@/lib/business'
@@ -31,6 +31,15 @@ export function QuickActionModal() {
   const selectedPackage = packages.find((item) => item.id === bookingPackageId)
   const selectedTravellerBooking = bookings.find((booking) => booking.id === travellerBookingId)
   const selectedTravellerOwner = selectedTravellerBooking ? customers.find((customer) => customer.id === selectedTravellerBooking.customerId) : undefined
+
+  useEffect(() => {
+    setBookingPackageId(actionDefaults.packageId || '')
+    setBookingPackageName(actionDefaults.packageName || '')
+    setBookingAgreedPrice(actionDefaults.agreedPrice || '')
+    setPaymentBookingId(actionDefaults.bookingId || '')
+    setTravellerBookingId(actionDefaults.bookingId || '')
+    setPaymentPurposeType('package')
+  }, [action, actionDefaults])
   if (!action) return null
 
   const current = editing?.type === action ? ({
