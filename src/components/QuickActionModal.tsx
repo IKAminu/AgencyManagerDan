@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAppStore } from '@/hooks/useAppStore'
 import { Button, Field, Input, Modal, Select } from '@/components/ui'
-import { money } from '@/lib/business'
+import { money, todayDate } from '@/lib/business'
 import type { Booking, QuickActionType } from '@/types'
 
 const details: Record<QuickActionType, { title: string; description: string }> = {
@@ -184,7 +184,7 @@ export function QuickActionModal() {
         </>}
         {isEditing && <Field label="Customer"><Input value={(current && 'customerId' in current ? customers.find((customer) => customer.id === current.customerId)?.name : undefined) || 'Customer unavailable'} readOnly /></Field>}
         <Field label="Amount received"><Input name="amount" type="number" min="1" defaultValue={value('amount')} readOnly={isEditing && (!current || !('status' in current) || current.status !== 'Pending')} required /></Field>
-        <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', new Date().toISOString().slice(0, 10))} required /></Field>
+        <Field label="Payment date"><Input name="date" type="date" defaultValue={value('date', todayDate())} required /></Field>
         <Field label="Payment method"><Select name="method" defaultValue={value('method', 'Bank Transfer')}><option>Bank Transfer</option><option>Cash</option><option>POS</option><option>Other</option></Select></Field>
         {!isEditing && <Field label="Confirmation state"><Select name="status" defaultValue="" required><option value="">Select confirmation state</option><option>Pending</option><option>Confirmed</option></Select></Field>}
         {isEditing && current && 'status' in current && current.status === 'Pending' && <Field label="Status"><Select name="status" defaultValue="Pending"><option>Pending</option><option>Confirmed</option><option>Failed</option></Select></Field>}
