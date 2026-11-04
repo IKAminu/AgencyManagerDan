@@ -6,7 +6,7 @@ import { bookingBalance, confirmedPaid, money, shortDate, supplierOutstanding, t
 import type { QuickActionType } from '@/types'
 
 type DeletableRecordType = 'lead' | 'customer' | 'package' | 'booking' | 'traveller' | 'supplier-cost' | 'document'
-type SelectableRecord = { id: string; [key: string]: unknown }
+type SelectableRecord = { id: string }
 type SelectionContextValue = { ids: string[]; selected: string[]; toggle: (id: string) => void; toggleAll: () => void }
 const SelectionContext = createContext<SelectionContextValue | null>(null)
 
@@ -24,9 +24,9 @@ function SelectAllCheckbox() {
 
 function exportRecords(records: SelectableRecord[], filename: string) {
   if (!records.length) return
-  const columns = Array.from(new Set(records.flatMap((record) => Object.keys(record).filter((key) => key !== 'id'))))
+  const columns = Array.from(new Set(records.flatMap((record) => Object.keys(record as Record<string, unknown>).filter((key) => key !== 'id'))))
   const quote = (value: unknown) => `"${String(value ?? '').replace(/\"/g, '""')}"`
-  const csv = [columns.map(quote).join(','), ...records.map((record) => columns.map((key) => quote(record[key])).join(','))].join('\r\n')
+  const csv = [columns.map(quote).join(','), ...records.map((record) => columns.map((key) => quote((record as Record<string, unknown>)[key])).join(','))].join('\r\n')
   const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
