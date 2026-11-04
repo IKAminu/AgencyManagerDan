@@ -62,14 +62,15 @@ function Module({ title, description, actionLabel, actionType, children, options
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const ids = records.map((record) => record.id)
   const selectedRecords = records.filter((record) => selectedIds.includes(record.id))
+  const activeSelectedIds = selectedRecords.map((record) => record.id)
   const selection: SelectionContextValue = { ids, selected: selectedIds, toggle: (id) => setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]), toggleAll: () => setSelectedIds((current) => ids.every((id) => current.includes(id)) ? current.filter((id) => !ids.includes(id)) : Array.from(new Set([...current, ...ids]))) }
   const removeSelected = async () => {
-    if (!recordType || !selectedIds.length) return
-    if (!window.confirm(`Delete ${selectedIds.length} selected ${recordType.replace('-', ' ')} record(s)? This cannot be undone.`)) return
-    try { await deleteRecords(recordType, selectedIds); setSelectedIds([]) }
+    if (!recordType || !activeSelectedIds.length) return
+    if (!window.confirm(`Delete ${activeSelectedIds.length} selected ${recordType.replace('-', ' ')} record(s)? This cannot be undone.`)) return
+    try { await deleteRecords(recordType, activeSelectedIds); setSelectedIds((current) => current.filter((id) => !activeSelectedIds.includes(id))) }
     catch (error) { window.alert(error instanceof Error ? error.message : 'The selected records could not be deleted.') }
   }
-  const selectionActions = recordType ? <div className="toolbar selection-toolbar"><span>{selectedIds.length} selected</span><Button variant="secondary" disabled={!selectedIds.length} onClick={() => exportRecords(selectedRecords, `dandurgu-selected-${recordType}.csv`)}><Download size={15} /> Export selected</Button><Button variant="danger" disabled={!selectedIds.length} onClick={() => void removeSelected()}><Trash2 size={15} /> Delete selected</Button></div> : null
+  const selectionActions = recordType ? <div className="toolbar selection-toolbar"><span>{activeSelectedIds.length} selected</span><Button variant="secondary" disabled={!activeSelectedIds.length} onClick={() => exportRecords(selectedRecords, `dandurgu-selected-${recordType}.csv`)}><Download size={15} /> Export selected</Button><Button variant="danger" disabled={!activeSelectedIds.length} onClick={() => void removeSelected()}><Trash2 size={15} /> Delete selected</Button></div> : null
   return <div className="page"><PageHeader title={title} description={description} action={<Button onClick={() => actionType && setAction(actionType)} disabled={!actionType}><Plus size={17} /> {actionLabel}</Button>} /><Toolbar query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} options={options} onExport={() => recordType ? exportRecords(records, `dandurgu-${recordType}.csv`) : exportVisibleTable()} selectionActions={selectionActions} /><SelectionContext.Provider value={selection}>{children}</SelectionContext.Provider><div className="table-footer"><span>{mode === 'demo' ? 'Showing sample records' : 'Showing agency records'}</span><span>{mode === 'demo' ? 'Changes are session-only' : 'Live database records'}</span></div></div>
 }
 
