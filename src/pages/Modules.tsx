@@ -28,7 +28,7 @@ function exportRecords(records: SelectableRecord[], filename: string) {
   const quote = (value: unknown) => {
     const raw = String(value ?? '')
     // Neutralize spreadsheet formulas before users open exported records.
-    const safe = /^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(raw) ? `'${raw}` : raw
+    const safe = /^[\s\u0000-\u001f]*[=+\-@]/.test(raw) ? "'" + raw : raw
     return `"${safe.replace(/"/g, '""')}"`
   }
   const csv = [columns.map(quote).join(','), ...records.map((record) => columns.map((key) => quote((record as Record<string, unknown>)[key])).join(','))].join('\r\n')
@@ -43,8 +43,8 @@ function exportVisibleTable() {
   if (!table) return
   const csv = Array.from(table.querySelectorAll('tr')).map((row) =>
     Array.from(row.querySelectorAll('th, td')).map((cell) => {
-      const value = (cell.textContent || '').replace(/\\s+/g, ' ').trim()
-      const safe = /^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(value) ? `'${value}` : value
+      const value = (cell.textContent || '').replace(/\s+/g, ' ').trim()
+      const safe = /^[\s\u0000-\u001f]*[=+\-@]/.test(value) ? "'" + value : value
       return '"' + safe.replace(/"/g, '""') + '"'
     }).join(',')
   ).join('\r\n')
