@@ -8,7 +8,7 @@ const client = () => {
 
 async function rows(table: string) {
   const pageSize = 500
-  const records: Record<string, unknown>[] = []
+  const records: Record<string, any>[] = []
   let lastId: string | null = null
 
   // Keyset pagination avoids the silent 1,000-row API cap and offset drift
@@ -26,7 +26,7 @@ async function rows(table: string) {
     const { data, error } = await query
     if (error) throw error
 
-    const page = (data ?? []) as Record<string, unknown>[]
+    const page = (data ?? []) as Record<string, any>[]
     records.push(...page)
     if (page.length < pageSize) break
 
