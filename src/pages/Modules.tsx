@@ -1,8 +1,9 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { Download, ExternalLink, Eye, Filter, Info, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Badge, Button, EmptyState, Input, Modal, PageHeader, Select, TableShell } from '@/components/ui'
 import { useAppStore } from '@/hooks/useAppStore'
 import { bookingBalance, confirmedPaid, money, shortDate, supplierOutstanding, travellerCount } from '@/lib/business'
+import { supabase } from '@/lib/supabase'
 import type { QuickActionType } from '@/types'
 
 type DeletableRecordType = 'lead' | 'customer' | 'package' | 'booking' | 'traveller' | 'supplier-cost' | 'document'
@@ -86,11 +87,73 @@ const useFilter = () => {
   return { query, setQuery, filter, setFilter }
 }
 
+type LeadFollowUpNote = { id: string; lead_id: string; activity_type: string; note: string; occurred_at: string; is_demo?: boolean }
+
+function LeadFollowUpNotes({ leadId, mode, notes, onAdd, onEdit }: { leadId: string; mode: 'live' | 'demo'; notes: LeadFollowUpNote[]; onAdd: (leadId: string, note: string) => Promise<void>; onEdit: (id: string, note: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const leadNotes = notes.filter((item) => item.lead_id === leadId).sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
+  const submit = async () => {
+    if (!draft.trim() || saving) return
+    setSaving(true)
+    try {
+      if (editingId) await onEdit(editingId, draft.trim())
+      else await onAdd(leadId, draft.trim())
+      setDraft(''); setEditingId(null); setOpen(false)
+    } finally { setSaving(false) }
+  }
+  return <div className="lead-followup-cell">
+    <button className="lead-followup-trigger" onClick={() => { setOpen((value) => !value); setEditingId(null); setDraft('') }}>
+      <span>{leadNotes.length ? `${leadNotes.length} ${leadNotes.length === 1 ? 'note' : 'notes'}` : 'No notes yet'}</span>
+      <strong>{open ? 'Close' : leadNotes.length ? 'View / add' : '+ Add note'}</strong>
+    </button>
+    {open && <div className="lead-followup-panel">
+      {leadNotes.map((item) => <div className="lead-followup-item" key={item.id}>
+        <div className="lead-followup-item-meta"><time>{new Date(item.occurred_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}</time><button onClick={() => { setEditingId(item.id); setDraft(item.note) }}>Edit</button></div>
+        {editingId === item.id ? <div className="lead-followup-editor"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={4000} aria-label="Edit follow-up note" /><div><button disabled={saving || !draft.trim()} onClick={() => void submit()}>{saving ? 'Saving…' : 'Save note'}</button><button onClick={() => { setEditingId(null); setDraft('') }}>Cancel</button></div></div> : <p>{item.note}</p>}
+      </div>)}
+      {!editingId && <div className="lead-followup-editor"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={4000} placeholder="What happened, what did the customer say, and what is the next step?" aria-label="New follow-up note" /><div><button disabled={saving || !draft.trim()} onClick={() => void submit()}>{saving ? 'Saving…' : 'Save follow-up note'}</button></div></div>}
+    </div>}
+  </div>
+}
+
 export function LeadsPage() {
   const controls = useFilter()
-  const { leads, customers, setAction, setEditing, convertLead } = useAppStore()
+  const { mode, leads, customers, setAction, setEditing, convertLead } = useAppStore()
+  const [followUpNotes, setFollowUpNotes] = useState<LeadFollowUpNote[]>([])
+  const [notesError, setNotesError] = useState('')
+  useEffect(() => {
+    let active = true
+    if (mode === 'demo') { setFollowUpNotes([]); return () => { active = false } }
+    if (!supabase) { setNotesError('Follow-up notes are unavailable because the database is not configured.'); return () => { active = false } }
+    supabase.from('lead_activities').select('id, lead_id, activity_type, note, occurred_at, is_demo').eq('is_demo', false).order('occurred_at', { ascending: false }).then(({ data, error }) => {
+      if (!active) return
+      if (error) setNotesError(error.message)
+      else { setFollowUpNotes((data || []) as LeadFollowUpNote[]); setNotesError('') }
+    })
+    return () => { active = false }
+  }, [mode])
+  const addFollowUpNote = async (leadId: string, note: string) => {
+    if (mode === 'demo') { setFollowUpNotes((items) => [{ id: crypto.randomUUID(), lead_id: leadId, activity_type: 'Follow-up', note, occurred_at: new Date().toISOString(), is_demo: true }, ...items]); return }
+    if (!supabase) throw new Error('Database connection is unavailable.')
+    const { data, error } = await supabase.from('lead_activities').insert({ lead_id: leadId, activity_type: 'Follow-up', note, is_demo: false }).select('id, lead_id, activity_type, note, occurred_at, is_demo').single()
+    if (error) { setNotesError(error.message); throw error }
+    setFollowUpNotes((items) => [data as LeadFollowUpNote, ...items])
+  }
+  const editFollowUpNote = async (id: string, note: string) => {
+    if (mode === 'demo') { setFollowUpNotes((items) => items.map((item) => item.id === id ? { ...item, note } : item)); return }
+    if (!supabase) throw new Error('Database connection is unavailable.')
+    const { data, error } = await supabase.from('lead_activities').update({ note }).eq('id', id).eq('is_demo', false).select('id, lead_id, activity_type, note, occurred_at, is_demo').single()
+    if (error) { setNotesError(error.message); throw error }
+    setFollowUpNotes((items) => items.map((item) => item.id === id ? data as LeadFollowUpNote : item))
+  }
   const rows = leads.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.reference} ${item.name} ${item.phone} ${item.source}`.toLowerCase().includes(controls.query.toLowerCase()))
-  return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" recordType="lead" records={rows} options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Not Interested', 'Converted', 'Lost']} {...controls}><TableShell><table><thead><tr><th><SelectAllCheckbox /></th><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Customer record</th><th>Received</th><th>Next follow-up</th><th>Actions</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><RecordCheckbox id={lead.id} /></td><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{customers.find((customer) => customer.leadId === lead.id) ? <strong>{customers.find((customer) => customer.leadId === lead.id)?.reference}</strong> : lead.status === "Converted" ? "Linked customer missing" : "—"}</td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td><td><div className="table-actions">{lead.status !== "Converted" && lead.status !== "Lost" && <Button variant="secondary" onClick={() => convertLead(lead.id)}>Convert</Button>}<Button variant="secondary" onClick={() => { setEditing({ type: 'lead', id: lead.id }); setAction('lead') }}><Pencil size={14} /> Edit</Button></div></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell></Module>
+  return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" recordType="lead" records={rows} options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Not Interested', 'Converted', 'Lost']} {...controls}>
+    {notesError && <div className="notes-error" role="alert">{notesError}</div>}
+    <TableShell><table><thead><tr><th><SelectAllCheckbox /></th><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Customer record</th><th>Received</th><th>Next follow-up</th><th>Follow-up notes</th><th>Actions</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><RecordCheckbox id={lead.id} /></td><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{customers.find((customer) => customer.leadId === lead.id) ? <strong>{customers.find((customer) => customer.leadId === lead.id)?.reference}</strong> : lead.status === "Converted" ? "Linked customer missing" : "—"}</td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td><td><LeadFollowUpNotes leadId={lead.id} mode={mode} notes={followUpNotes} onAdd={addFollowUpNote} onEdit={editFollowUpNote} /></td><td><div className="table-actions">{lead.status !== "Converted" && lead.status !== "Lost" && <Button variant="secondary" onClick={() => convertLead(lead.id)}>Convert</Button>}<Button variant="secondary" onClick={() => { setEditing({ type: 'lead', id: lead.id }); setAction('lead') }}><Pencil size={14} /> Edit</Button></div></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell>
+  </Module>
 }
 
 export function CustomersPage() {
