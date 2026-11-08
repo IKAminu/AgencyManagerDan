@@ -20,6 +20,9 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
   const [factorId, setFactorId] = useState('')
   const [challengeId, setChallengeId] = useState('')
   const [qrCode, setQrCode] = useState('')
+  const [setupSecret, setSetupSecret] = useState('')
+  const [showSetupSecret, setShowSetupSecret] = useState(false)
+  const [secretCopied, setSecretCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -51,6 +54,9 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
     if (enrollmentError) throw enrollmentError
     setFactorId(enrollment.id)
     setQrCode(enrollment.totp.qr_code)
+    setSetupSecret(enrollment.totp.secret)
+    setShowSetupSecret(false)
+    setSecretCopied(false)
     setStep('enroll')
   }
 
@@ -115,6 +121,9 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
     setFactorId('')
     setChallengeId('')
     setQrCode('')
+    setSetupSecret('')
+    setShowSetupSecret(false)
+    setSecretCopied(false)
     setError('')
   }
 
@@ -138,7 +147,25 @@ function AuthScreen({ onAuthenticated, onDemo }: { onAuthenticated: (session: Se
 
       {step === 'enroll' && <form className="auth-form" onSubmit={handleVerify}>
         <div className="auth-qr"><img src={qrCode} alt="Authenticator setup QR code" /></div>
-        <p className="auth-help">Open Google Authenticator, Microsoft Authenticator, 1Password or another TOTP app. Scan this QR code, then enter the six-digit code it generates.</p>
+        <p className="auth-help">Open Google Authenticator, Microsoft Authenticator, 1Password or another TOTP app and scan this QR code. Then enter the six-digit code it generates.</p>
+        <div className="auth-manual-setup">
+          <p className="auth-help"><strong>Can't scan the QR code?</strong> If you're setting this up on the same phone, add the account manually using the setup key below.</p>
+          <div className="auth-secret-row">
+            <code className="auth-secret-value">{showSetupSecret ? setupSecret : '•••• •••• •••• ••••'}</code>
+            <button className="button button-secondary" type="button" onClick={() => setShowSetupSecret((visible) => !visible)}>{showSetupSecret ? 'Hide key' : 'Show key'}</button>
+            <button className="button button-secondary" type="button" disabled={!setupSecret} onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(setupSecret)
+                setSecretCopied(true)
+                setError('')
+              } catch {
+                setError('Could not copy the setup key. You can reveal it and enter it manually.')
+              }
+            }}>{secretCopied ? 'Copied' : 'Copy key'}</button>
+          </div>
+          <p className="auth-help">In your authenticator app, choose the option to enter a setup key manually. Use the account name Dandurgu Headquarters and select time-based (TOTP) if asked.</p>
+          <p className="auth-help">Keep this key private. Anyone who has it can generate your verification codes.</p>
+        </div>
         <label className="field-group">Authenticator code<input className="field auth-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={code} onChange={(event) => setCode(event.target.value)} placeholder="000000" /></label>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <button className="button button-primary auth-submit" disabled={busy || code.replace(/\s/g, '').length < 6}>{busy ? 'Verifying…' : 'Enable two-step verification'}</button>
