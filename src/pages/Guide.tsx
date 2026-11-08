@@ -185,7 +185,7 @@ const sections: ManualSection[] = [
 ]
 
 const idTypes = [
-  { prefix: 'DNC', example: 'DNC-2026-A1B2C3D4', name: 'Lead', detail: 'Dandurgu contact / enquiry reference. Created when a new lead is saved.' },
+  { prefix: 'DNC', example: 'DNC-2026-A1B2C3D4', name: 'Lead', detail: 'Lead reference prefix. Created when a new lead is saved.' },
   { prefix: 'BKG', example: 'BKG-2026-E5F6A7B8', name: 'Booking', detail: 'Booking reference. Created when a booking is saved.' },
   { prefix: 'CUS', example: 'CUS-9A8B7C6D', name: 'Customer', detail: 'Customer profile reference. Created for direct customers and lead conversions.' },
   { prefix: 'PAY', example: 'PAY-1A2B3C4D', name: 'Customer payment', detail: 'Payment receipt reference. Each separate payment gets its own reference.' },
@@ -193,6 +193,28 @@ const idTypes = [
 
 function FlowDiagram({ items }: { items: { label: string; detail: string; icon: typeof BookOpen }[] }) {
   return <div className="manual-flow">{items.map((item, index) => { const Icon = item.icon; return <div className="manual-flow-step" key={item.label}><div className="manual-flow-card"><span><Icon size={19} /></span><strong>{item.label}</strong><small>{item.detail}</small></div>{index < items.length - 1 && <div className="manual-flow-arrow"><ArrowRight size={17} /><ArrowDown size={17} /></div>}</div> })}</div>
+}
+
+function ScreenIllustration({ id }: { id: string }) {
+  const screens: Record<string, { title: string; fields: string[]; result: string; tag: string }> = {
+    dashboard: { title: 'Daily overview', fields: ['Upcoming departures', 'Lead follow-ups due', 'Outstanding customer balances'], result: 'Open an alert to reach the record that needs attention.', tag: 'OVERVIEW' },
+    leads: { title: 'Add lead', fields: ['Full name · Phone number', 'Service · Lead source', 'Travel period · Number of travellers', 'Follow-up date · Status'], result: 'Save lead → DNC reference created → Follow-up notes added over time', tag: 'NEW ENQUIRY' },
+    customers: { title: 'Add customer', fields: ['Full name · Phone number', 'Email · Nationality · City', 'Current or historical customer'], result: 'Save customer → CUS reference created → Ready to own bookings', tag: 'CUSTOMER PROFILE' },
+    packages: { title: 'Create package', fields: ['Package code · Package name', 'Category · Destination · Duration', 'Selling price · Estimated cost', 'Available places · Status'], result: 'Activate package → Select it when creating a booking', tag: 'CATALOGUE' },
+    bookings: { title: 'Create booking', fields: ['Customer / booking owner', 'Select package → name and price fill in', 'Agreed price · Party size', 'Departure date · Return date · Status'], result: 'Save booking → BKG reference → Add travellers and payments', tag: 'BOOKING' },
+    travellers: { title: 'Add traveller', fields: ['Select existing booking', 'Booking owner profile preselected', 'Traveller full name · Nationality', 'Group · Document readiness · Travel status'], result: 'Save one traveller per passenger in the booking', tag: 'PASSENGER' },
+    payments: { title: 'Record payment', fields: ['Select existing booking', 'Owner · Package · Price · Dates fill in', 'Outstanding balance shown automatically', 'Amount received · Date · Method · Confirmation'], result: 'Save payment → PAY reference → Confirmed amount reduces balance', tag: 'MONEY RECEIVED' },
+    suppliers: { title: 'Supplier cost → payment', fields: ['Choose booking · Supplier · Cost', 'Total amount · Due date', 'Record each actual supplier payment', 'Amount · Date · Method · Reference'], result: 'Outstanding = supplier cost − confirmed supplier payments', tag: 'MONEY PAID OUT' },
+    documents: { title: 'Add document link', fields: ['Document name · Category', 'Related record type · Reference', 'Secure HTTPS document link', 'Review status'], result: 'Save link → Open the secure file from the related record', tag: 'DOCUMENT' },
+    notes: { title: 'Agency notes', fields: ['Title · Details', 'Note / Reminder / To-do', 'Priority · Optional due date'], result: 'Save → Search, edit, complete or delete later', tag: 'WORKSPACE' },
+    settings: { title: 'Workspace status', fields: ['Live Mode · Authenticated account', 'MFA verification · Server connection', 'Demo Mode · Temporary sample data'], result: 'Check the mode before changing real agency records', tag: 'ACCESS' },
+  }
+  const screen = screens[id] || screens.dashboard
+  return <div className="manual-screen-illustration" aria-label={`Illustration of the ${screen.title} screen`}>
+    <div className="manual-screen-top"><span><i></i><i></i><i></i></span><strong>{screen.title}</strong><small>{screen.tag}</small></div>
+    <div className="manual-screen-fields">{screen.fields.map((field, index) => <div className="manual-screen-field" key={field}><span>{String(index + 1).padStart(2, '0')}</span><b>{field}</b><i></i></div>)}</div>
+    <div className="manual-screen-result"><CheckCircle2 size={15} /><span>{screen.result}</span></div>
+  </div>
 }
 
 function StepList({ steps }: { steps: Step[] }) {
