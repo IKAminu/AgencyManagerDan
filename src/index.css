@@ -711,3 +711,15 @@
  .manual-practice-grid { grid-template-columns: 1fr 1fr; }.manual-uuid { align-items: flex-start; flex-direction: column; }
  .manual-step-list li { padding: .6rem; }.manual-hero { padding: 1rem; }
 }
+
+
+.manual-screen-illustration { overflow: hidden; margin: .85rem 0; border: 1px solid #e7e2d9; border-radius: .65rem; background: #f8f7f4; }
+.manual-screen-top { display: flex; align-items: center; gap: .65rem; border-bottom: 1px solid #e9e5de; background: #fff; padding: .6rem .8rem; }
+.manual-screen-top > span { display: flex; gap: .2rem; }.manual-screen-top i { width: .42rem; height: .42rem; border-radius: 50%; background: #d8d1c7; }
+.manual-screen-top strong { color: #514b42; font-size: .67rem; }.manual-screen-top small { margin-left: auto; border-radius: 99px; background: #f1e3d4; padding: .2rem .45rem; color: #98531f; font-size: .54rem; font-weight: 800; letter-spacing: .06em; }
+.manual-screen-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; padding: .7rem; }
+.manual-screen-field { display: flex; align-items: center; gap: .5rem; min-width: 0; border: 1px solid #eae6df; border-radius: .4rem; background: white; padding: .55rem; }
+.manual-screen-field span { color: #b28a67; font: 700 .57rem ui-monospace, monospace; }.manual-screen-field b { overflow: hidden; color: #625d55; font-size: .61rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.manual-screen-field i { width: .35rem; height: .35rem; flex: none; margin-left: auto; border-right: 1px solid #b8b0a5; border-bottom: 1px solid #b8b0a5; transform: rotate(45deg); }
+.manual-screen-result { display: flex; align-items: flex-start; gap: .45rem; border-top: 1px solid #e9e5de; background: #f4f8f4; padding: .65rem .8rem; color: #426d50; }.manual-screen-result svg { flex: none; }.manual-screen-result span { font-size: .62rem; line-height: 1.5; }
+.lead-followup-error { margin: 0; border-radius: .35rem; background: #fff1ef; padding: .45rem; color: #a33f33; font-size: .62rem; line-height: 1.5; }
+@media (max-width: 560px) { .manual-screen-fields { grid-template-columns: 1fr; }.manual-screen-top { gap: .45rem; }.manual-screen-top strong { font-size: .62rem; } }
