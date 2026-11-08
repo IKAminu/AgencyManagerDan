@@ -153,6 +153,38 @@ const sections: ManualSection[] = [
     warning: 'Do not paste public links to passports, visas or other sensitive identity documents. Use restricted agency access and share only with people who need the file.',
   },
   {
+    id: 'records', title: 'Finding, editing, exporting and deleting records', subtitle: 'Everyday table operations and safe corrections', keywords: 'search filter edit view delete selected bulk export CSV checkbox records find duplicate',
+    icon: Search, purpose: 'Most modules use the same table controls. Search and filters help locate the record; View shows its relationships; Edit changes its fields; export and delete actions are available only where the record type supports them.',
+    steps: [
+      { title: 'Open the correct module', detail: 'Use the sidebar to open Leads, Customer records, Packages, Bookings, Travellers, Payments or Supplier payments. Do not edit a record from a different module just because its name appears in search.' },
+      { title: 'Search for the record', detail: 'Use the Search records field above the table. Search by a visible reference, name, phone number or other displayed detail. Search before creating a new record to avoid duplicates.' },
+      { title: 'Narrow the list', detail: 'Use the status filter beside search. Clear the filter to return to all statuses. The table shows the matching records.' },
+      { title: 'Open or edit', detail: 'Use View to inspect a record and its linked information. Use Edit to change the fields the form allows. Save and check the updated row.' },
+      { title: 'Export the filtered records', detail: 'Choose Export CSV to download the records currently in the table after search and status filtering. Open the CSV in a spreadsheet and keep it in the agency-approved storage location.' },
+      { title: 'Export only selected records', detail: 'For modules that support selection, tick the checkbox at the start of each row. Use the checkbox in the table header to select all currently visible rows. Choose Export selected to download only those records.' },
+      { title: 'Delete selected records only when safe', detail: 'Select the rows and choose Delete selected. Read the confirmation carefully. The database blocks deletion where linked records or financial history would be damaged. If deletion is blocked, retain the record and use its status or archive option instead.' },
+    ],
+    automation: ['Search and status filters narrow the table without changing the saved record.', 'CSV export is generated in the browser from the current record data.', 'The app asks for confirmation before bulk deletion and the database enforces relationship protections.'],
+    manual: ['Check that you selected the correct rows before exporting or deleting.', 'Store exported files securely because they may contain customer contact information.', 'Correct a typo with Edit. Do not delete and recreate a record just to change its name or phone number.'],
+    impact: ['Editing a parent record can change linked views, balances or dashboard alerts.', 'Deleting a parent record may be blocked when customers, bookings, travellers, payments or supplier records depend on it.', 'Payments and financial history should be corrected using their reversal/void workflows, not by deleting ledger entries.'],
+    warning: 'CSV files are copies, not live links. Editing the CSV does not update Headquarters. Never import an edited export back by assuming it will synchronise automatically.',
+  },
+  {
+    id: 'statuses', title: 'Understanding record statuses', subtitle: 'Use the status that describes what has actually happened', keywords: 'status new contacted follow up interested lost converted booking enquiry pending confirmed cancelled documents abroad returned payment supplier cost',
+    icon: CheckCircle2, purpose: 'Statuses communicate where a record is in its workflow. They do not perform the real-world action for you. For example, marking a payment Confirmed does not check the bank account.',
+    steps: [
+      { title: 'Lead statuses', detail: 'New means no meaningful contact has happened yet. Contacted means the first contact was made. Follow-up Required means another contact is due. Interested means the person has shown intent. Converted means a customer profile was created from the lead. Not Interested and Lost are closed outcomes.' },
+      { title: 'Booking statuses', detail: 'Enquiry is not yet a reserved booking. Pending Confirmation is waiting for confirmation. Confirmed is accepted. In Preparation and Ready for Travel describe the preparation stage. Travelling means the party is on the trip. Completed means the trip is finished. Cancelled means it will not proceed.' },
+      { title: 'Traveller statuses', detail: 'Not Started is the initial state. Documents Pending means paperwork is incomplete. Documents Complete means it has been checked. Ready for Travel means operational checks are complete. Departed, Abroad and Returned describe the passenger’s travel progress.' },
+      { title: 'Payment statuses', detail: 'Pending means the receipt is awaiting verification. Confirmed means the money has been verified and counts against the balance. Failed means the transaction did not complete. Reversed means the app ledger entry has been reversed.' },
+      { title: 'Supplier cost statuses', detail: 'Unpaid, Partially Paid, Paid and Overdue describe the amount still owed and its due date. Supplier payment records describe the actual disbursements made against that cost.' },
+    ],
+    automation: ['Some dashboard alerts and package availability calculations depend on statuses.', 'Only Confirmed customer payments reduce booking balances.', 'Booking statuses such as Enquiry and Cancelled do not reserve package places.'],
+    manual: ['Update the status after the real-world event has happened.', 'When a status changes, check the related date, note or transaction reference as well.'],
+    impact: ['Changing a booking status can affect package capacity and dashboard departure alerts.', 'Changing a lead status can stop or trigger follow-up alerts.', 'Changing a payment status can change the amount shown as outstanding.'],
+    warning: 'Never use a status as a shortcut to make the dashboard look correct. The status must describe the actual situation.',
+  },
+  {
     id: 'notes', title: 'Notes: agency notes, reminders and guidelines', subtitle: 'Keep operating context and actions in one shared place', keywords: 'notes reminder todo checklist due date priority guidelines save edit delete',
     icon: StickyNote, purpose: 'Notes is the agency’s shared workspace for working notes, reminders and to-do items. Guidelines contains this operator manual.',
     steps: [
