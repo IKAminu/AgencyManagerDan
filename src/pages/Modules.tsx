@@ -142,14 +142,14 @@ export function LeadsPage() {
     if (!supabase) throw new Error('Database connection is unavailable.')
     const { data, error } = await supabase.from('lead_activities').insert({ lead_id: leadId, activity_type: 'Follow-up', note, is_demo: false }).select('id, lead_id, activity_type, note, occurred_at, is_demo').single()
     if (error) { setNotesError(error.message); throw error }
-    setFollowUpNotes((items) => [data as LeadFollowUpNote, ...items])
+    setFollowUpNotes((items) => [data as LeadFollowUpNote, ...items]); setNotesError('')
   }
   const editFollowUpNote = async (id: string, note: string) => {
     if (mode === 'demo') { setFollowUpNotes((items) => items.map((item) => item.id === id ? { ...item, note } : item)); return }
     if (!supabase) throw new Error('Database connection is unavailable.')
     const { data, error } = await supabase.from('lead_activities').update({ note }).eq('id', id).eq('is_demo', false).select('id, lead_id, activity_type, note, occurred_at, is_demo').single()
     if (error) { setNotesError(error.message); throw error }
-    setFollowUpNotes((items) => items.map((item) => item.id === id ? data as LeadFollowUpNote : item))
+    setFollowUpNotes((items) => items.map((item) => item.id === id ? data as LeadFollowUpNote : item)); setNotesError('')
   }
   const rows = leads.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.reference} ${item.name} ${item.phone} ${item.source}`.toLowerCase().includes(controls.query.toLowerCase()))
   return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" recordType="lead" records={rows} options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Not Interested', 'Converted', 'Lost']} {...controls}>
