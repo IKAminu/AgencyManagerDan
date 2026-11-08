@@ -94,6 +94,7 @@ function LeadFollowUpNotes({ leadId, mode, notes, onAdd, onEdit }: { leadId: str
   const [draft, setDraft] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [actionError, setActionError] = useState('')
   const leadNotes = notes.filter((item) => item.lead_id === leadId).sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
   const submit = async () => {
     if (!draft.trim() || saving) return
@@ -101,15 +102,16 @@ function LeadFollowUpNotes({ leadId, mode, notes, onAdd, onEdit }: { leadId: str
     try {
       if (editingId) await onEdit(editingId, draft.trim())
       else await onAdd(leadId, draft.trim())
-      setDraft(''); setEditingId(null); setOpen(false)
-    } finally { setSaving(false) }
+      setDraft(''); setEditingId(null); setOpen(false); setActionError('')
+    } catch (error) { setActionError(error instanceof Error ? error.message : 'Could not save this follow-up note.') }
+    finally { setSaving(false) }
   }
   return <div className="lead-followup-cell">
     <button className="lead-followup-trigger" onClick={() => { setOpen((value) => !value); setEditingId(null); setDraft('') }}>
       <span>{leadNotes.length ? `${leadNotes.length} ${leadNotes.length === 1 ? 'note' : 'notes'}` : 'No notes yet'}</span>
       <strong>{open ? 'Close' : leadNotes.length ? 'View / add' : '+ Add note'}</strong>
     </button>
-    {open && <div className="lead-followup-panel">
+    {open && <div className="lead-followup-panel">{actionError && <p className="lead-followup-error" role="alert">{actionError}</p>}
       {leadNotes.map((item) => <div className="lead-followup-item" key={item.id}>
         <div className="lead-followup-item-meta"><time>{new Date(item.occurred_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}</time><button onClick={() => { setEditingId(item.id); setDraft(item.note) }}>Edit</button></div>
         {editingId === item.id ? <div className="lead-followup-editor"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={4000} aria-label="Edit follow-up note" /><div><button disabled={saving || !draft.trim()} onClick={() => void submit()}>{saving ? 'Saving…' : 'Save note'}</button><button onClick={() => { setEditingId(null); setDraft('') }}>Cancel</button></div></div> : <p>{item.note}</p>}
