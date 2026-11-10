@@ -24,10 +24,10 @@ export const initialCustomers: Customer[] = [
 ]
 
 export const initialPackages: TravelPackage[] = [
-  { id: 'p1', code: 'UMR-RAM-26', name: 'Ramadan Umrah — Last 10 Nights', category: 'Umrah', destination: 'Makkah & Madinah', duration: '14 days', price: 3250000, estimatedCost: 2675000, currency: 'NGN', availability: 7, status: 'Active' },
-  { id: 'p2', code: 'UMR-ESS-26', name: 'Essential Umrah', category: 'Umrah', destination: 'Makkah & Madinah', duration: '10 days', price: 2450000, estimatedCost: 1950000, currency: 'NGN', availability: 12, status: 'Active' },
-  { id: 'p3', code: 'HAJ-PRE-26', name: 'Hajj Premium Programme', category: 'Hajj', destination: 'Saudi Arabia', duration: '28 days', price: 8900000, estimatedCost: 7600000, currency: 'NGN', availability: 0, status: 'Fully Booked' },
-  { id: 'p4', code: 'DXB-FAM-26', name: 'Dubai Family Escape', category: 'Other Tours', destination: 'Dubai', duration: '7 days', price: 4100000, estimatedCost: 3380000, currency: 'NGN', availability: 15, status: 'Draft' },
+  { id: 'p1', code: 'UMR-RAM-26', name: 'Ramadan Umrah — Last 10 Nights', category: 'Umrah', destination: 'Makkah & Madinah', departureLocation: 'Kano', notes: 'Group departure. Confirm final flight schedule with the supplier.', duration: '14 days', price: 3250000, estimatedCost: 2675000, currency: 'NGN', availability: 7, status: 'Active' },
+  { id: 'p2', code: 'UMR-ESS-26', name: 'Essential Umrah', category: 'Umrah', destination: 'Makkah & Madinah', departureLocation: 'Abuja', duration: '10 days', price: 2450000, estimatedCost: 1950000, currency: 'NGN', availability: 12, status: 'Active' },
+  { id: 'p3', code: 'HAJ-PRE-26', name: 'Hajj Premium Programme', category: 'Hajj', destination: 'Saudi Arabia', departureLocation: 'Lagos', duration: '28 days', price: 8900000, estimatedCost: 7600000, currency: 'NGN', availability: 0, status: 'Fully Booked' },
+  { id: 'p4', code: 'DXB-FAM-26', name: 'Dubai Family Escape', category: 'Other Tours', destination: 'Dubai', departureLocation: 'Abuja', duration: '7 days', price: 4100000, estimatedCost: 3380000, currency: 'NGN', availability: 15, status: 'Draft' },
 ]
 
 export const initialBookings: Booking[] = [
