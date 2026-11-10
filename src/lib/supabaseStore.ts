@@ -57,6 +57,7 @@ async function loadStore() {
   }))
   const packages: TravelPackage[] = packageRows.map((r) => ({
     id:r.id, code:r.code, name:r.name, category:r.category, destination:r.destination,
+    departureLocation:r.departure_location ?? undefined, notes:r.notes ?? undefined,
     duration:r.duration, price:Number(r.price), estimatedCost:Number(r.estimated_cost),
     currency:r.currency, availability:r.availability, status:r.status,
   }))
@@ -119,6 +120,7 @@ async function saveStore(data: {
   })))
   await save('packages', data.packages.map((r) => ({
     id:r.id, code:r.code, name:r.name, category:r.category, destination:r.destination,
+    departure_location:r.departureLocation ?? null, notes:r.notes ?? null,
     duration:r.duration, price:r.price, estimated_cost:r.estimatedCost, currency:r.currency,
     availability:r.availability, status:r.status,
   })))
