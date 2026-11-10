@@ -57,9 +57,10 @@ async function loadStore() {
   }))
   const packages: TravelPackage[] = packageRows.map((r) => ({
     id:r.id, code:r.code, name:r.name, category:r.category, destination:r.destination,
-    departureLocation:r.departure_location ?? undefined, notes:r.notes ?? undefined,
-    duration:r.duration, price:Number(r.price), estimatedCost:Number(r.estimated_cost),
-    currency:r.currency, availability:r.availability, status:r.status,
+    departureLocation:r.departure_location ?? undefined, departureDate:r.departure_date ?? undefined,
+    sourceAgent:r.source_agent ?? undefined, notes:r.notes ?? undefined,
+    duration:r.duration, price:Number(r.price), estimatedCost:r.estimated_cost == null ? null : Number(r.estimated_cost),
+    currency:r.currency, availability:r.availability == null ? null : Number(r.availability), status:r.status,
   }))
   const bookings: Booking[] = bookingRows.map((r) => ({
     id:r.id, reference:r.reference, customerId:r.customer_id, packageId:r.package_id ?? undefined,
