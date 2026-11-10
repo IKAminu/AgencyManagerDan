@@ -120,7 +120,8 @@ async function saveStore(data: {
   })))
   await save('packages', data.packages.map((r) => ({
     id:r.id, code:r.code, name:r.name, category:r.category, destination:r.destination,
-    departure_location:r.departureLocation ?? null, notes:r.notes ?? null,
+    departure_location:r.departureLocation ?? null, departure_date:r.departureDate ?? null,
+    source_agent:r.sourceAgent ?? null, notes:r.notes ?? null,
     duration:r.duration, price:r.price, estimated_cost:r.estimatedCost, currency:r.currency,
     availability:r.availability, status:r.status,
   })))
