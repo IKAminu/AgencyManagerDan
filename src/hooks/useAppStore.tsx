@@ -40,8 +40,8 @@ const reference = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 
 const today = todayDate
 const confirmedSupplierPaid = (costId: string, payments: SupplierPayment[]) =>
   payments.filter((payment) => payment.supplierCostId === costId && (payment.status || 'Confirmed') === 'Confirmed').reduce((sum, payment) => sum + payment.amount, 0)
-const packageAvailabilityStatus = (status: TravelPackage['status'], availability: number): TravelPackage['status'] =>
-  availability <= 0 && status === 'Active' ? 'Fully Booked' : availability > 0 && status === 'Fully Booked' ? 'Active' : status
+const packageAvailabilityStatus = (status: TravelPackage['status'], availability: number | null): TravelPackage['status'] =>
+  availability === null ? status : availability <= 0 && status === 'Active' ? 'Fully Booked' : availability > 0 && status === 'Fully Booked' ? 'Active' : status
 const bookingReservesPlaces = (status: Booking['status']) => !['Enquiry', 'Cancelled'].includes(status)
 
 export function AppStoreProvider({ children, mode }: { children: ReactNode; mode: AppMode }) {
@@ -161,7 +161,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
       setSupplierPayments((items) => [payment, ...items])
       setSupplierCosts((items) => items.map((item) => item.id === cost.id ? { ...item, paid, status } : item))
     }
-    if (type === 'package') setPackages((items) => [{ id: id(), code: values.code, name: values.name, category: values.category, destination: values.destination, departureLocation: values.departureLocation?.trim() || undefined, notes: values.notes?.trim() || undefined, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), currency: 'NGN', availability: Number(values.availability || 0), status: (values.status || 'Draft') as TravelPackage['status'] }, ...items])
+    if (type === 'package') setPackages((items) => [{ id: id(), code: values.code, name: values.name, category: values.category, destination: values.destination, departureLocation: values.departureLocation?.trim() || undefined, departureDate: values.departureDate?.trim() || undefined, sourceAgent: values.sourceAgent?.trim() || undefined, notes: values.notes?.trim() || undefined, duration: values.duration, price: Number(values.price), estimatedCost: values.estimatedCost?.trim() ? Number(values.estimatedCost) : null, currency: 'NGN', availability: values.availability?.trim() ? Number(values.availability) : null, status: (values.status || 'Draft') as TravelPackage['status'] }, ...items])
     if (type === 'lead') setLeads((items) => [{ id: id(), reference: `DNC-${today().slice(0, 4)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, name: values.name, phone: values.phone, email: values.email, service: values.service, travelPeriod: values.travelPeriod || 'Flexible', source: values.source, status: (values.status || 'New') as Lead['status'], receivedAt: today(), followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city }, ...items])
     if (type === 'customer') setCustomers((items) => [{ id: id(), reference: reference('CUS'), name: values.name, phone: values.phone, email: values.email, nationality: values.nationality || 'Nigerian', city: values.city, historical: values.historical === 'true', createdAt: today() }, ...items])
     if (type === 'booking') {
@@ -169,9 +169,11 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
       const partySize = Number(values.partySize || 1)
       const status = (values.status || 'Pending Confirmation') as Booking['status']
       if (selectedPackage && bookingReservesPlaces(status)) {
-        if (selectedPackage.status !== 'Active' || selectedPackage.availability < partySize) return
-        const availability = selectedPackage.availability - partySize
-        setPackages((items) => items.map((item) => item.id === selectedPackage.id ? { ...item, availability, status: packageAvailabilityStatus(item.status, availability) } : item))
+        if (selectedPackage.status !== 'Active' || (selectedPackage.availability !== null && selectedPackage.availability < partySize)) return
+        if (selectedPackage.availability !== null) {
+          const availability = selectedPackage.availability - partySize
+          setPackages((items) => items.map((item) => item.id === selectedPackage.id ? { ...item, availability, status: packageAvailabilityStatus(item.status, availability) } : item))
+        }
       }
       setBookings((items) => [{ id: id(), reference: `BKG-${today().slice(0, 4)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, customerId: values.customerId, packageId: values.packageId || undefined, packageName: values.packageName, agreedPrice: Number(values.agreedPrice || values.amount), partySize, currency: 'NGN', bookingDate: today(), departureDate: values.departureDate, returnDate: values.returnDate, status }, ...items])
     }
@@ -263,7 +265,7 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
   const updateRecord = (type: QuickActionType, recordId: string, values: Record<string, string>) => {
     if (type === 'document') setDocuments((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, category: values.category, relatedType: values.relatedType as DocumentRecord['relatedType'], relatedReference: values.relatedReference, url: values.url, status: values.status as DocumentRecord['status'] } : item))
     if (type === 'supplier-cost') setSupplierCosts((items) => items.map((item) => { if (item.id !== recordId) return item; const paid = confirmedSupplierPaid(item.id, supplierPayments); const amount = Math.max(Number(values.amount), paid); const status: SupplierCost['status'] = paid >= amount ? 'Paid' : values.dueDate < today() ? 'Overdue' : paid > 0 ? 'Partially Paid' : 'Unpaid'; return { ...item, supplier: values.supplier, category: values.category, amount, paid, dueDate: values.dueDate, status } }))
-    if (type === 'package') setPackages((items) => items.map((item) => { if (item.id !== recordId) return item; const availability = Number(values.availability || 0); const requestedStatus = values.status as TravelPackage['status']; return { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, departureLocation: values.departureLocation?.trim() || undefined, notes: values.notes?.trim() || undefined, duration: values.duration, price: Number(values.price), estimatedCost: Number(values.estimatedCost || 0), availability, status: packageAvailabilityStatus(requestedStatus, availability) } }))
+    if (type === 'package') setPackages((items) => items.map((item) => { if (item.id !== recordId) return item; const availability = Number(values.availability || 0); const requestedStatus = values.status as TravelPackage['status']; return { ...item, code: values.code, name: values.name, category: values.category, destination: values.destination, departureLocation: values.departureLocation?.trim() || undefined, departureDate: values.departureDate?.trim() || undefined, sourceAgent: values.sourceAgent?.trim() || undefined, notes: values.notes?.trim() || undefined, duration: values.duration, price: Number(values.price), estimatedCost: values.estimatedCost?.trim() ? Number(values.estimatedCost) : null, availability: values.availability?.trim() ? Number(values.availability) : null, status: packageAvailabilityStatus(requestedStatus, values.availability?.trim() ? availability : null) } }))
     if (type === 'lead' && values.status === 'Converted') convertLead(recordId, values)
     if (type === 'lead' && values.status !== 'Converted') setLeads((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, service: values.service, source: values.source, travelPeriod: values.travelPeriod, status: values.status as Lead['status'], followUp: values.followUp || undefined, groupSize: Number(values.groupSize || 1), city: values.city || undefined, notes: values.notes || undefined } : item))
     if (type === 'customer') setCustomers((items) => items.map((item) => item.id === recordId ? { ...item, name: values.name, phone: values.phone, email: values.email || undefined, nationality: values.nationality, city: values.city || undefined, historical: values.historical === 'true', notes: values.notes || undefined } : item))
