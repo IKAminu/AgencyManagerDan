@@ -116,7 +116,7 @@
   .table-scroll { overflow-x: auto; }
   th { border-bottom: 1px solid var(--color-line); background: #faf9f7; padding: .65rem .8rem; color: #777269; font-size: .64rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
   td { border-bottom: 1px solid #f0ede8; padding: .72rem .8rem; color: #4e4a44; font-size: .73rem; white-space: nowrap; }
-  .package-notes-cell { min-width: 180px; max-width: 280px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; vertical-align: top; }
+  .package-notes-cell { width: 280px; min-width: 180px; max-width: 280px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; vertical-align: top; }
   tbody tr:last-child td { border-bottom: 0; }
   tbody tr:hover { background: #fcfbf9; }
   td strong { color: #34312c; font-weight: 650; }
