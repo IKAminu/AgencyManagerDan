@@ -39,12 +39,14 @@ export interface TravelPackage {
   category: string
   destination: string
   departureLocation?: string
+  departureDate?: string
+  sourceAgent?: string
   notes?: string
   duration: string
   price: number
-  estimatedCost: number
+  estimatedCost: number | null
   currency: 'NGN'
-  availability: number
+  availability: number | null
   status: 'Draft' | 'Active' | 'Fully Booked' | 'Unavailable' | 'Archived'
 }
 
