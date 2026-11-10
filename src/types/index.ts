@@ -38,6 +38,8 @@ export interface TravelPackage {
   name: string
   category: string
   destination: string
+  departureLocation?: string
+  notes?: string
   duration: string
   price: number
   estimatedCost: number
