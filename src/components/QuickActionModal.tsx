@@ -218,11 +218,13 @@ export function QuickActionModal() {
         <Field label="Package name"><Input name="name" defaultValue={value('name')} required /></Field>
         <Field label="Category"><Select name="category" defaultValue={value('category', 'Umrah')}><option>Umrah</option><option>Hajj</option><option>Other Tours</option><option>General Travel</option></Select></Field>
         <Field label="Departure location" hint="City the package departs from. Use a consistent city name so packages can be filtered and sorted."><Input name="departureLocation" list="package-departure-locations" defaultValue={value('departureLocation')} placeholder="e.g. Kano, Abuja, Lagos" /><datalist id="package-departure-locations"><option value="Abuja" /><option value="Lagos" /><option value="Kano" /><option value="Kaduna" /><option value="Port Harcourt" /><option value="Other" /></datalist></Field>
+        <Field label="Departure date(s)" hint="Use a date range or list multiple departure options where applicable."><Input name="departureDate" defaultValue={value('departureDate')} placeholder="e.g. 15 Dec 2026 – 28 Dec 2026" /></Field>
+        <Field label="Source agent"><Input name="sourceAgent" defaultValue={value('sourceAgent')} placeholder="e.g. Raudah Travels" /></Field>
         <Field label="Destination"><Input name="destination" defaultValue={value('destination', 'Makkah & Madinah')} required /></Field>
         <Field label="Duration"><Input name="duration" defaultValue={value('duration')} placeholder="e.g. 10 days" required /></Field>
         <Field label="Selling price (NGN)"><Input name="price" type="number" min="1" defaultValue={value('price')} required /></Field>
-        <Field label="Estimated cost (NGN)"><Input name="estimatedCost" type="number" min="0" defaultValue={value('estimatedCost', '0')} /></Field>
-        <Field label="Available places"><Input name="availability" type="number" min="0" defaultValue={value('availability', '0')} /></Field>
+        <Field label="Estimated cost (NGN)" hint="Leave blank if not yet confirmed."><Input name="estimatedCost" type="number" min="0" defaultValue={value('estimatedCost')} /></Field>
+        <Field label="Available places" hint="Leave blank if the confirmed capacity is not yet known."><Input name="availability" type="number" min="0" defaultValue={value('availability')} /></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'Draft')}><option>Draft</option><option>Active</option><option>Fully Booked</option><option>Unavailable</option><option>Archived</option></Select></Field>
         <Field label="Package notes" hint="Optional operational details that do not fit the structured fields, such as special requirements, transport, hotel arrangements, inclusions or exclusions."><textarea className="input" name="notes" rows={4} defaultValue={value('notes')} placeholder="Add any other package details..." /></Field>
       </>}
