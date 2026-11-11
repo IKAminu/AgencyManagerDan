@@ -89,8 +89,7 @@ const useFilter = () => {
 
 type LeadFollowUpNote = { id: string; lead_id: string; activity_type: string; note: string; occurred_at: string; is_demo?: boolean }
 
-function LeadFollowUpNotes({ leadId, mode, notes, onAdd, onEdit }: { leadId: string; mode: 'live' | 'demo'; notes: LeadFollowUpNote[]; onAdd: (leadId: string, note: string) => Promise<void>; onEdit: (id: string, note: string) => Promise<void> }) {
-  const [open, setOpen] = useState(false)
+function LeadFollowUpNotes({ leadId, mode, open, onToggle, notes, onAdd, onEdit }: { leadId: string; mode: 'live' | 'demo'; open: boolean; onToggle: () => void; notes: LeadFollowUpNote[]; onAdd: (leadId: string, note: string) => Promise<void>; onEdit: (id: string, note: string) => Promise<void> }) {
   const [draft, setDraft] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -102,12 +101,12 @@ function LeadFollowUpNotes({ leadId, mode, notes, onAdd, onEdit }: { leadId: str
     try {
       if (editingId) await onEdit(editingId, draft.trim())
       else await onAdd(leadId, draft.trim())
-      setDraft(''); setEditingId(null); setOpen(false); setActionError('')
+      setDraft(''); setEditingId(null); onToggle(); setActionError('')
     } catch (error) { setActionError(error instanceof Error ? error.message : 'Could not save this follow-up note.') }
     finally { setSaving(false) }
   }
   return <div className="lead-followup-cell">
-    <button className="lead-followup-trigger" onClick={() => { setOpen((value) => !value); setEditingId(null); setDraft('') }}>
+    <button className="lead-followup-trigger" aria-expanded={open} onClick={() => { onToggle(); setEditingId(null); setDraft(''); setActionError('') }}>
       <span>{leadNotes.length ? `${leadNotes.length} ${leadNotes.length === 1 ? 'note' : 'notes'}` : 'No notes yet'}</span>
       <strong>{open ? 'Close' : leadNotes.length ? 'View / add' : '+ Add note'}</strong>
     </button>
@@ -125,6 +124,7 @@ export function LeadsPage() {
   const controls = useFilter()
   const { mode, leads, customers, setAction, setEditing, convertLead } = useAppStore()
   const [followUpNotes, setFollowUpNotes] = useState<LeadFollowUpNote[]>([])
+  const [openLeadNoteId, setOpenLeadNoteId] = useState<string | null>(null)
   const [notesError, setNotesError] = useState('')
   useEffect(() => {
     let active = true
@@ -154,7 +154,7 @@ export function LeadsPage() {
   const rows = leads.filter((item) => (!controls.filter || item.status === controls.filter) && `${item.reference} ${item.name} ${item.phone} ${item.source} ${item.notes ?? ''}`.toLowerCase().includes(controls.query.toLowerCase()))
   return <Module title="Leads" description="Manage enquiries, follow-ups and conversion into customers." actionLabel="Add lead" actionType="lead" recordType="lead" records={rows} options={['New', 'Contacted', 'Follow-up Required', 'Interested', 'Not Interested', 'Converted', 'Lost']} {...controls}>
     {notesError && <div className="notes-error" role="alert">{notesError}</div>}
-    <TableShell><table><thead><tr><th><SelectAllCheckbox /></th><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Customer record</th><th>Received</th><th>Next follow-up</th><th>Follow-up notes</th><th>Actions</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><RecordCheckbox id={lead.id} /></td><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{customers.find((customer) => customer.leadId === lead.id) ? <strong>{customers.find((customer) => customer.leadId === lead.id)?.reference}</strong> : lead.status === "Converted" ? "Linked customer missing" : "—"}</td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td><td><LeadFollowUpNotes leadId={lead.id} mode={mode} notes={followUpNotes} onAdd={addFollowUpNote} onEdit={editFollowUpNote} /></td><td><div className="table-actions">{lead.status !== "Converted" && lead.status !== "Lost" && <Button variant="secondary" onClick={() => convertLead(lead.id)}>Convert</Button>}<Button variant="secondary" onClick={() => { setEditing({ type: 'lead', id: lead.id }); setAction('lead') }}><Pencil size={14} /> Edit</Button></div></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell>
+    <TableShell><table><thead><tr><th><SelectAllCheckbox /></th><th>Lead reference</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Campaign</th><th>Status</th><th>Customer record</th><th>Received</th><th>Next follow-up</th><th>Follow-up notes</th><th>Actions</th></tr></thead><tbody>{rows.map((lead) => <tr key={lead.id}><td><RecordCheckbox id={lead.id} /></td><td><strong>{lead.reference}</strong></td><td>{lead.name}</td><td>{lead.phone}</td><td>{lead.service}</td><td>{lead.source}</td><td>{lead.campaign || '—'}</td><td><Badge>{lead.status}</Badge></td><td>{customers.find((customer) => customer.leadId === lead.id) ? <strong>{customers.find((customer) => customer.leadId === lead.id)?.reference}</strong> : lead.status === "Converted" ? "Linked customer missing" : "—"}</td><td>{shortDate(lead.receivedAt)}</td><td>{lead.followUp ? shortDate(lead.followUp) : '—'}</td><td><LeadFollowUpNotes leadId={lead.id} mode={mode} open={openLeadNoteId === lead.id} onToggle={() => setOpenLeadNoteId((current) => current === lead.id ? null : lead.id)} notes={followUpNotes} onAdd={addFollowUpNote} onEdit={editFollowUpNote} /></td><td><div className="table-actions">{lead.status !== "Converted" && lead.status !== "Lost" && <Button variant="secondary" onClick={() => convertLead(lead.id)}>Convert</Button>}<Button variant="secondary" onClick={() => { setEditing({ type: 'lead', id: lead.id }); setAction('lead') }}><Pencil size={14} /> Edit</Button></div></td></tr>)}</tbody></table>{!rows.length && <EmptyState title="No leads found" text="Adjust the search or filter, or add a new enquiry." />}</TableShell>
   </Module>
 }
 
