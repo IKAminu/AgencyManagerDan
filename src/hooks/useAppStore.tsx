@@ -278,8 +278,8 @@ export function AppStoreProvider({ children, mode }: { children: ReactNode; mode
         const willBeReserved = bookingReservesPlaces(nextStatus) ? nextPartySize : 0
         const delta = willBeReserved - wasReserved
         const linkedPackage = existing.packageId ? packages.find((item) => item.id === existing.packageId) : undefined
-        if (linkedPackage && delta > 0 && (linkedPackage.status !== 'Active' || linkedPackage.availability < delta)) return
-        if (linkedPackage && delta !== 0) {
+        if (linkedPackage && delta > 0 && (linkedPackage.status !== 'Active' || (linkedPackage.availability != null && linkedPackage.availability < delta))) return
+        if (linkedPackage && linkedPackage.availability != null && delta !== 0) {
           const availability = linkedPackage.availability - delta
           setPackages((items) => items.map((item) => item.id === linkedPackage.id ? { ...item, availability, status: packageAvailabilityStatus(item.status, availability) } : item))
         }
