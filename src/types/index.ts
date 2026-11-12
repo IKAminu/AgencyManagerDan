@@ -15,7 +15,7 @@ export interface Lead {
   paymentPlan?: string
   source: string
   campaign?: string
-  status: 'New' | 'Contacted' | 'Follow-up Required' | 'Interested' | 'Converted' | 'Not Interested' | 'Lost'
+  status: 'New' | 'Contacted' | 'Follow-up Required' | 'Interested' | 'Nurture' | 'Converted' | 'Not Interested' | 'Lost'
   receivedAt: string
   followUp?: string
   groupSize: number
