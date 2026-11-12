@@ -19,7 +19,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 const toneFor = (status: string) => {
   if (['Active', 'Confirmed', 'Completed', 'Returned', 'Valid', 'Paid', 'Converted', 'Documents Complete', 'Ready for Travel'].includes(status)) return 'success'
   if (['New', 'Travelling', 'Abroad', 'Contacted'].includes(status)) return 'info'
-  if (['Follow-up Required', 'Pending Confirmation', 'In Preparation', 'Partially Paid', 'Documents Pending', 'Needs Review', 'Pending', 'Unpaid'].includes(status)) return 'warning'
+  if (['Follow-up Required', 'Nurture', 'Pending Confirmation', 'In Preparation', 'Partially Paid', 'Documents Pending', 'Needs Review', 'Pending', 'Unpaid'].includes(status)) return 'warning'
   if (['Cancelled', 'Failed', 'Overdue', 'Lost', 'Reversed'].includes(status)) return 'danger'
   return 'neutral'
 }
