@@ -142,7 +142,7 @@ export function QuickActionModal() {
         <Field label="Preferred payment plan"><Select name="paymentPlan" defaultValue={value('paymentPlan')}><option value="">Not specified</option><option>ONE-TIME PAYMENT</option><option>PAY A DEPOSIT NOW, COMPLETE PAYMENT LATER</option><option>I'M NOT SURE YET</option></Select></Field>
         <Field label="Number of travellers"><Input name="groupSize" type="number" min="1" defaultValue={value('groupSize', '1')} /></Field>
         <Field label="Follow-up date"><Input name="followUp" type="date" defaultValue={value('followUp')} /></Field>
-        <Field label="Status"><Select name="status" defaultValue={value('status', 'New')}><option>New</option><option>Contacted</option><option>Follow-up Required</option><option>Interested</option><option>Not Interested</option><option>Converted</option><option>Lost</option></Select></Field>
+        <Field label="Status"><Select name="status" defaultValue={value('status', 'New')}><option>New</option><option>Contacted</option><option>Follow-up Required</option><option>Interested</option><option>Nurture</option><option>Not Interested</option><option>Converted</option><option>Lost</option></Select></Field>
       </>}
       {action === 'customer' && <>
         <Field label="Nationality"><Input name="nationality" defaultValue={value('nationality', 'Nigerian')} /></Field>
