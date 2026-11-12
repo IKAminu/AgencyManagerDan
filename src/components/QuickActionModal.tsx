@@ -138,6 +138,8 @@ export function QuickActionModal() {
         <Field label="Preferred departure date"><Input name="preferredDepartureDate" type="date" defaultValue={value('preferredDepartureDate')} /></Field>
         <Field label="Departure from" hint="The city or airport the customer expects to depart from."><Input name="departureLocation" defaultValue={value('departureLocation')} placeholder="e.g. Kano, Abuja, Lagos" /></Field>
         <Field label="State"><Input name="state" defaultValue={value('state')} placeholder="Customer's state" /></Field>
+        <Field label="Travel timing"><Select name="travelTiming" defaultValue={value('travelTiming')}><option value="">Not specified</option><option>THIS MONTH</option><option>IN 1–3 MONTHS</option><option>WITHIN 6 MONTHS</option><option>JUST BROWSING</option></Select></Field>
+        <Field label="Preferred payment plan"><Select name="paymentPlan" defaultValue={value('paymentPlan')}><option value="">Not specified</option><option>ONE-TIME PAYMENT</option><option>PAY A DEPOSIT NOW, COMPLETE PAYMENT LATER</option><option> I'M NOT SURE YET</option><option>NOT SURE</option></Select></Field>
         <Field label="Number of travellers"><Input name="groupSize" type="number" min="1" defaultValue={value('groupSize', '1')} /></Field>
         <Field label="Follow-up date"><Input name="followUp" type="date" defaultValue={value('followUp')} /></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'New')}><option>New</option><option>Contacted</option><option>Follow-up Required</option><option>Interested</option><option>Not Interested</option><option>Converted</option><option>Lost</option></Select></Field>
