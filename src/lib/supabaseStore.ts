@@ -48,6 +48,7 @@ async function loadStore() {
     id:r.id, reference:r.reference, name:r.name, phone:r.phone, email:r.email ?? undefined,
     service:r.service, travelPeriod:r.travel_period, preferredDepartureDate:r.preferred_departure_date ?? undefined,
     departureLocation:r.departure_location ?? undefined, state:r.state ?? undefined,
+    travelTiming:r.travel_timing ?? undefined, paymentPlan:r.payment_plan ?? undefined,
     source:r.source, campaign:r.campaign ?? undefined,
     status:r.status, receivedAt:r.received_at, followUp:r.follow_up ?? undefined,
     groupSize:r.group_size, city:r.city ?? undefined, notes:r.notes ?? undefined,
@@ -115,7 +116,8 @@ async function saveStore(data: {
     service:r.service, travel_period:r.travelPeriod, source:r.source, campaign:r.campaign ?? null,
     status:r.status, received_at:r.receivedAt, follow_up:r.followUp ?? null,
     group_size:r.groupSize, city:r.city ?? null, preferred_departure_date:r.preferredDepartureDate || null,
-    departure_location:r.departureLocation ?? null, state:r.state ?? null, notes:r.notes ?? null,
+    departure_location:r.departureLocation ?? null, state:r.state ?? null,
+    travel_timing:r.travelTiming ?? null, payment_plan:r.paymentPlan ?? null, notes:r.notes ?? null,
   })))
   await save('customers', data.customers.map((r) => ({
     id:r.id, reference:r.reference, name:r.name, phone:r.phone, email:r.email ?? null,
