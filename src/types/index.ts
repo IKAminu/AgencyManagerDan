@@ -8,6 +8,9 @@ export interface Lead {
   email?: string
   service: string
   travelPeriod: string
+  preferredDepartureDate?: string
+  departureLocation?: string
+  state?: string
   source: string
   campaign?: string
   status: 'New' | 'Contacted' | 'Follow-up Required' | 'Interested' | 'Converted' | 'Not Interested' | 'Lost'
