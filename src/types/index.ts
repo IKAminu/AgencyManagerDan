@@ -11,6 +11,8 @@ export interface Lead {
   preferredDepartureDate?: string
   departureLocation?: string
   state?: string
+  travelTiming?: string
+  paymentPlan?: string
   source: string
   campaign?: string
   status: 'New' | 'Contacted' | 'Follow-up Required' | 'Interested' | 'Converted' | 'Not Interested' | 'Lost'
