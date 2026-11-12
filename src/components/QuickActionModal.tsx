@@ -135,6 +135,9 @@ export function QuickActionModal() {
         <Field label="Service of interest"><Select name="service" defaultValue={value('service', 'Umrah')} required><option>Umrah</option><option>Hajj</option><option>General Travel</option><option>Other Tours</option></Select></Field>
         <Field label="Lead source" hint="Where this enquiry came from."><Select name="source" defaultValue={value('source', 'WhatsApp')} required><option>WhatsApp</option><option>Facebook Ads</option><option>Instagram Ads</option><option>Website</option><option>Referral</option><option>Walk-in</option><option>Other</option></Select></Field>
         <Field label="Preferred travel period"><Input name="travelPeriod" defaultValue={value('travelPeriod')} placeholder="e.g. Ramadan 2026" /></Field>
+        <Field label="Preferred departure date"><Input name="preferredDepartureDate" type="date" defaultValue={value('preferredDepartureDate')} /></Field>
+        <Field label="Departure from" hint="The city or airport the customer expects to depart from."><Input name="departureLocation" defaultValue={value('departureLocation')} placeholder="e.g. Kano, Abuja, Lagos" /></Field>
+        <Field label="State"><Input name="state" defaultValue={value('state')} placeholder="Customer's state" /></Field>
         <Field label="Number of travellers"><Input name="groupSize" type="number" min="1" defaultValue={value('groupSize', '1')} /></Field>
         <Field label="Follow-up date"><Input name="followUp" type="date" defaultValue={value('followUp')} /></Field>
         <Field label="Status"><Select name="status" defaultValue={value('status', 'New')}><option>New</option><option>Contacted</option><option>Follow-up Required</option><option>Interested</option><option>Not Interested</option><option>Converted</option><option>Lost</option></Select></Field>
